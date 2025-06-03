@@ -1,73 +1,55 @@
-import { supabase } from './supabase.js';
+const supabase = window.supabase.createClient(
+  "https://qqlsttamprrcljljcqrk.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxbHN0dGFtcHJyY2xqbGpjcXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTQ2NTcsImV4cCI6MjA2NDQzMDY1N30.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g"
+);
 
-const chatBox = document.getElementById('chatBox');
-const chatForm = document.getElementById('chatForm');
-const chatInput = document.getElementById('chatInput');
+const chatMessages = document.getElementById("chat-messages");
+const chatInput = document.getElementById("chatInput");
+const chatForm = document.getElementById("chatForm");
+const currentUser = JSON.parse(localStorage.getItem("loggedInUser")) || { name: "Unknown" };
 
-// Use stored or fallback username
-let username = localStorage.getItem("currentUser");
-if (!username) {
-  username = prompt("Enter your name:");
-  localStorage.setItem("currentUser", username || "Guest");
-}
-
-// Load messages on page load
 async function loadMessages() {
   const { data, error } = await supabase
     .from("messages")
     .select("*")
     .order("created_at", { ascending: true });
 
-  if (error) {
-    console.error("Error fetching messages:", error);
-    return;
-  }
+  if (error) return console.error("Failed to load messages:", error);
 
-  chatBox.innerHTML = ""; // clear old content
-  data.forEach(displayMessage);
+  chatMessages.innerHTML = "";
+  data.forEach(msg => {
+    const div = document.createElement("div");
+    div.textContent = `${msg.username}: ${msg.text}`;
+    chatMessages.appendChild(div);
+  });
+
+  chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Display a message in the chat box
-function displayMessage(msg) {
-  const messageEl = document.createElement("div");
-  messageEl.className = "message";
-
-  const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-  messageEl.innerHTML = `
-    <strong>${msg.username}</strong>: ${msg.text}
-    <span class="timestamp">${time}</span>
-  `;
-
-  chatBox.appendChild(messageEl);
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
-
-// Send a message
 chatForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const text = chatInput.value.trim();
   if (!text) return;
 
-  const { error } = await supabase.from("messages").insert([{ username, text }]);
-  if (error) {
-    console.error("Error sending message:", error);
-    return;
-  }
+  const { error } = await supabase.from("messages").insert([
+    {
+      username: currentUser.name,
+      text
+    }
+  ]);
 
-  chatInput.value = "";
+  if (error) {
+    alert("Error sending message.");
+    console.error(error);
+  } else {
+    chatInput.value = "";
+    loadMessages();
+  }
 });
 
-// Realtime updates
-supabase
-  .channel("realtime:messages")
-  .on("postgres_changes", {
-    event: "INSERT",
-    schema: "public",
-    table: "messages"
-  }, (payload) => {
-    displayMessage(payload.new);
-  })
-  .subscribe();
+function logout() {
+  localStorage.removeItem("loggedInUser");
+  window.location.href = "login.html";
+}
 
-loadMessages();
+document.addEventListener("DOMContentLoaded", loadMessages);

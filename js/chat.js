@@ -1,12 +1,17 @@
+const { createClient } = supabase;
+const supabaseClient = createClient(
+  'https://qqlsttamprrcljljcqrk.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxbHN0dGFtcHJyY2xqbGpjcXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTQ2NTcsImV4cCI6MjA2NDQzMDY1N30.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g'
+);
+
 const chatBox = document.getElementById("chatBox");
 const chatForm = document.getElementById("chatForm");
 const chatInput = document.getElementById("chatInput");
-const supabase = window.supabase;
 
 const user = JSON.parse(localStorage.getItem("loggedInUser")) || { name: "Unknown" };
 
 async function loadMessages() {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from("messages")
     .select("*")
     .order("created_at", { ascending: true });
@@ -24,12 +29,14 @@ async function loadMessages() {
 function appendMessage({ username, text, created_at }) {
   const div = document.createElement("div");
   div.className = "message";
-  const time = new Date(created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  const timestamp = new Date(created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   div.innerHTML = `
-    <div><strong>${username || "Unknown"}</strong><span class="timestamp">${time}</span></div>
+    <div class="meta"><strong>${username || "Unknown"}</strong> ${timestamp}</div>
     <div class="text">${text}</div>
   `;
+
   chatBox.appendChild(div);
 }
 
@@ -38,22 +45,22 @@ chatForm.addEventListener("submit", async (e) => {
   const message = chatInput.value.trim();
   if (!message) return;
 
-  const { error } = await supabase.from("messages").insert([{
+  const { error } = await supabaseClient.from("messages").insert([{
     username: user.name || "Unknown",
     text: message
   }]);
 
   if (error) {
-    console.error("Failed to send message:", error);
+    alert("Failed to send message.");
+    console.error("Insert error:", error);
     return;
   }
 
   chatInput.value = "";
 });
 
-// Real-time updates
-supabase
-  .channel('public:messages')
+supabaseClient
+  .channel('chat-room')
   .on(
     'postgres_changes',
     { event: 'INSERT', schema: 'public', table: 'messages' },
@@ -64,4 +71,4 @@ supabase
   )
   .subscribe();
 
-loadMessages();
+document.addEventListener("DOMContentLoaded", loadMessages);

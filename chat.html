@@ -2,73 +2,75 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chat | PM SYSTEM</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Live Chat</title>
   <link rel="stylesheet" href="css/style.css" />
   <style>
+    body {
+      font-family: sans-serif;
+      background: #f3f4f6;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
     .chat-container {
       max-width: 800px;
-      margin: 50px auto;
-      background: #f9f9f9;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      padding: 20px;
+      margin: auto;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      border: 1px solid #ccc;
+      background: white;
     }
-
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      border-bottom: 1px solid #ddd;
+    }
     .message {
       margin-bottom: 1rem;
-      padding: 10px 15px;
+      padding: 0.75rem;
+      background: #f0f0f0;
       border-radius: 8px;
-      background: #e0e7ff;
     }
-
     .message .meta {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: #555;
-      margin-bottom: 4px;
+      margin-bottom: 0.25rem;
     }
-
-    .message.you {
-      background: #d1ffe0;
+    .message .text {
+      font-size: 1rem;
     }
-
-    .message.you .meta {
-      color: #31784c;
-    }
-
     .chat-form {
       display: flex;
-      margin-top: 20px;
+      padding: 1rem;
+      gap: 0.5rem;
+      border-top: 1px solid #ddd;
     }
-
     .chat-form input {
-      flex-grow: 1;
-      padding: 10px;
-      border-radius: 4px 0 0 4px;
+      flex: 1;
+      padding: 0.75rem;
+      font-size: 1rem;
       border: 1px solid #ccc;
+      border-radius: 4px;
     }
-
     .chat-form button {
-      padding: 10px 15px;
-      border: none;
-      background: #4a4aff;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      background: #003f91;
       color: white;
-      font-weight: bold;
-      cursor: pointer;
-      border-radius: 0 4px 4px 0;
-    }
-
-    h1 {
-      text-align: center;
+      border: none;
+      border-radius: 4px;
     }
   </style>
 </head>
 <body>
   <div class="chat-container">
-    <h1>Live Chat</h1>
-    <div id="messages"></div>
-    <form class="chat-form" id="chatForm">
-      <input type="text" id="chatInput" placeholder="Type a message..." required />
+    <div class="messages" id="messages"></div>
+    <form class="chat-form" id="chat-form">
+      <input type="text" id="chat-input" placeholder="Type a message..." required />
       <button type="submit">Send</button>
     </form>
   </div>

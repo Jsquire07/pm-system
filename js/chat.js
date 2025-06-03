@@ -6,7 +6,7 @@ const typingIndicator = document.getElementById('typingIndicator')
 
 let currentUser = localStorage.getItem('currentUser') || 'Unknown'
 
-// Load and render messages
+// Load messages
 async function loadMessages() {
   try {
     const { data, error } = await supabase
@@ -48,11 +48,14 @@ function renderMessage(message) {
     delBtn.textContent = 'Delete'
     delBtn.onclick = () => deleteMessage(message.id)
 
-    const meta = msgDiv.querySelector('.meta')
-    meta.append(editBtn, delBtn)
+    msgDiv.querySelector('.meta').append(editBtn, delBtn)
   }
 
   messageBox.scrollTop = messageBox.scrollHeight
+}
+
+function formatMentions(text) {
+  return text.replace(/@\w+/g, match => `<span class="mention">${match}</span>`)
 }
 
 function stringToColor(str) {
@@ -63,11 +66,7 @@ function stringToColor(str) {
   return `hsl(${hash % 360}, 70%, 60%)`
 }
 
-function formatMentions(text) {
-  return text.replace(/@\w+/g, match => `<span class="mention">${match}</span>`)
-}
-
-// Send message
+// Submit message
 form.addEventListener('submit', async (e) => {
   e.preventDefault()
   const text = input.value.trim()
@@ -82,7 +81,7 @@ form.addEventListener('submit', async (e) => {
   await supabase.from('typing').delete().eq('username', currentUser)
 })
 
-// Typing status
+// Typing logic
 input.addEventListener('input', async () => {
   if (!input.value.trim()) {
     await supabase.from('typing').delete().eq('username', currentUser)
@@ -91,39 +90,35 @@ input.addEventListener('input', async () => {
   }
 })
 
-// Edit message
+// Edit
 async function editMessage(message) {
   const newText = prompt('Edit your message:', message.text)
   if (!newText) return
   await supabase.from('messages').update({ text: newText }).eq('id', message.id)
 }
 
-// Delete message
+// Delete
 async function deleteMessage(id) {
   if (confirm('Delete this message?')) {
     await supabase.from('messages').delete().eq('id', id)
   }
 }
 
-// Real-time message sync
+// Realtime: messages
 supabase
-  .channel('messages-sync')
-  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-    renderMessage(payload.new)
-  })
-  .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, payload => {
-    renderMessage(payload.new)
-  })
-  .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, payload => {
+  .from('messages')
+  .on('INSERT', payload => renderMessage(payload.new))
+  .on('UPDATE', payload => renderMessage(payload.new))
+  .on('DELETE', payload => {
     const el = document.querySelector(`[data-id="${payload.old.id}"]`)
     if (el) el.remove()
   })
   .subscribe()
 
-// Typing indicator
+// Realtime: typing
 supabase
-  .channel('typing-sync')
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'typing' }, payload => {
+  .from('typing')
+  .on('*', payload => {
     if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
       if (payload.new.username !== currentUser) {
         typingIndicator.textContent = `${payload.new.username} is typing...`
@@ -134,5 +129,5 @@ supabase
   })
   .subscribe()
 
-// Kickstart
+// Load on page load
 loadMessages()

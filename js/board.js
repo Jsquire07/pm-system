@@ -342,20 +342,35 @@ async function moveTask(taskId, direction) {
 
   const newStatus = columns[newIndex].id;
 
-  // Animate cards
-  document.querySelectorAll('.card').forEach(el => el.classList.add("moving"));
-  setTimeout(() => {
-    document.querySelectorAll('.card').forEach(el => el.classList.remove("moving"));
-  }, 300);
+  const cardElement = document.querySelector(`.card[data-id="${taskId}"]`);
+  if (!cardElement) return;
 
-  const { error } = await supabase
-    .from("tasks")
-    .update({ status: newStatus })
-    .eq("id", taskId);
+  // Animate card out
+  cardElement.classList.add("animating-out");
 
-  if (error) return console.error("Task move failed:", error);
+  // Wait for animation to finish before updating status
+  setTimeout(async () => {
+    const { error } = await supabase
+      .from("tasks")
+      .update({ status: newStatus })
+      .eq("id", taskId);
 
-  loadBoard();
+    if (error) return console.error("Task move failed:", error);
+
+    await loadBoard();
+
+    // Animate card in
+    const newCardElement = document.querySelector(`.card[data-id="${taskId}"]`);
+    if (newCardElement) {
+      newCardElement.classList.add("animating-in");
+      setTimeout(() => newCardElement.classList.add("active"), 10);
+      setTimeout(() => {
+        newCardElement.classList.remove("animating-in");
+        newCardElement.classList.remove("active");
+      }, 300);
+    }
+
+  }, 200); // match CSS transition timing
 }
 
 document.addEventListener("DOMContentLoaded", () => {

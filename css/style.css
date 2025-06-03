@@ -735,3 +735,23 @@ canvas {
   transition: transform 0.3s ease;
   transform: scale(1.02);
 }
+.card {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  will-change: transform, opacity;
+  position: relative;
+}
+
+.card.animating-out {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.card.animating-in {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+.card.animating-in.active {
+  opacity: 1;
+  transform: translateY(0);
+}

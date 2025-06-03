@@ -763,3 +763,10 @@ canvas {
 .card.animating {
   z-index: 10;
 }
+.card.animating {
+  z-index: 5;
+  position: relative;
+}
+.card {
+  transition: transform 0.3s ease;
+}

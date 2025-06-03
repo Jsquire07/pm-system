@@ -341,49 +341,49 @@ async function moveTask(taskId, direction) {
   if (newIndex < 0 || newIndex >= columns.length) return;
 
   const newStatus = columns[newIndex].id;
-
   const cardElement = document.querySelector(`.card[data-id="${taskId}"]`);
   if (!cardElement) return;
 
   const firstRect = cardElement.getBoundingClientRect();
 
-  // Update task status in Supabase
-  await supabase
+  // Update Supabase
+  const { error } = await supabase
     .from("tasks")
     .update({ status: newStatus })
     .eq("id", taskId);
 
-  // Wait for DOM update
-  await loadBoard();
+  if (error) return console.error("Task move failed:", error);
 
-  // New card element after reload
-  const newCardElement = document.querySelector(`.card[data-id="${taskId}"]`);
-  if (!newCardElement) return;
+  // Move DOM element to new column manually
+  const newColumnList = document.querySelector(`.card-list[id="${newStatus}"]`);
+  if (!newColumnList) return;
 
-  const lastRect = newCardElement.getBoundingClientRect();
+  // Store current scroll position to prevent jump
+  const scrollY = window.scrollY;
 
-  // Invert and play animation
+  // Move the card to the new column in the DOM
+  newColumnList.appendChild(cardElement);
+
+  // Force reflow
+  const lastRect = cardElement.getBoundingClientRect();
+
   const invertX = firstRect.left - lastRect.left;
   const invertY = firstRect.top - lastRect.top;
 
-  newCardElement.classList.add("animating");
-  newCardElement.style.transform = `translate(${invertX}px, ${invertY}px)`;
-  newCardElement.style.transition = "transform 0s";
+  cardElement.style.transform = `translate(${invertX}px, ${invertY}px)`;
+  cardElement.style.transition = "transform 0s";
+  cardElement.classList.add("animating");
 
-  // Trigger reflow
-  newCardElement.getBoundingClientRect();
-
-  // Animate to final position
   requestAnimationFrame(() => {
-    newCardElement.style.transition = "transform 300ms ease-in-out";
-    newCardElement.style.transform = "translate(0, 0)";
+    cardElement.style.transition = "transform 300ms ease";
+    cardElement.style.transform = "translate(0, 0)";
   });
 
-  // Clean up after animation
   setTimeout(() => {
-    newCardElement.style.transform = "";
-    newCardElement.style.transition = "";
-    newCardElement.classList.remove("animating");
+    cardElement.style.transform = "";
+    cardElement.style.transition = "";
+    cardElement.classList.remove("animating");
+    window.scrollTo({ top: scrollY }); // maintain scroll position
   }, 300);
 }
 

@@ -1,7 +1,7 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
 
 const supabaseUrl = 'https://qqlsttamprrcljljcqrk.supabase.co'
-const supabaseKey = 'YOUR_SUPABASE_ANON_KEY_HERE'
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTY5ODAxNjYwMCwiZXhwIjoxOTMzNTkyMjAwfQ.8jBDphYZFfPbzN1hSh-r4MEYF5PpZpqlIv0IdK8Vm5A'
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 const messageBox = document.getElementById('chatBox')

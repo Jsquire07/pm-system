@@ -1,59 +1,66 @@
-const supabase = window.supabase.createClient(
-  "https://qqlsttamprrcljljcqrk.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." // your actual anon key
-);
+const chatBox = document.getElementById("chatBox");
+const chatForm = document.getElementById("chatForm");
+const chatInput = document.getElementById("chatInput");
 
-const messagesContainer = document.getElementById("messages");
-const form = document.getElementById("chat-form");
-const input = document.getElementById("chat-input");
-
-const user = JSON.parse(localStorage.getItem("loggedInUser"));
-const username = user?.name || "Unknown";
-
-function formatTimestamp(isoString) {
-  const date = new Date(isoString);
-  const options = { hour: "2-digit", minute: "2-digit", hour12: true };
-  const time = date.toLocaleTimeString("en-AU", options);
-  const day = date.toLocaleDateString("en-AU", { day: "2-digit", month: "short", year: "numeric" });
-  return `${time} • ${day}`;
-}
-
-function renderMessage(msg) {
-  const div = document.createElement("div");
-  div.className = "message";
-  div.innerHTML = `
-    <div class="meta"><strong>${msg.username || "Unknown"}</strong> — ${formatTimestamp(msg.created_at)}</div>
-    <div class="text">${msg.text}</div>
-  `;
-  messagesContainer.appendChild(div);
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
+const user = JSON.parse(localStorage.getItem("loggedInUser")) || { name: "Unknown" };
 
 async function loadMessages() {
-  const { data, error } = await supabase.from("messages").select("*").order("created_at", { ascending: true });
-  if (error) return console.error("Error loading messages:", error);
-  messagesContainer.innerHTML = "";
-  data.forEach(renderMessage);
+  const { data, error } = await supabase
+    .from("messages")
+    .select("*")
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("Failed to load messages:", error);
+    return;
+  }
+
+  chatBox.innerHTML = "";
+  data.forEach(msg => appendMessage(msg));
+  chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-form.addEventListener("submit", async (e) => {
+function appendMessage({ username, text, created_at }) {
+  const div = document.createElement("div");
+  div.className = "message";
+  const time = new Date(created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  div.innerHTML = `
+    <div><strong>${username || "Unknown"}</strong><span class="timestamp">${time}</span></div>
+    <div class="text">${text}</div>
+  `;
+  chatBox.appendChild(div);
+}
+
+chatForm.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const text = input.value.trim();
-  if (!text) return;
+  const message = chatInput.value.trim();
+  if (!message) return;
 
-  const { error } = await supabase.from("messages").insert([
-    { username: username, text }
-  ]);
+  const { error } = await supabase.from("messages").insert([{
+    username: user.name || "Unknown",
+    text: message
+  }]);
 
-  if (error) return alert("Failed to send message");
+  if (error) {
+    console.error("Failed to send message:", error);
+    return;
+  }
 
-  input.value = "";
-  loadMessages();
+  chatInput.value = "";
 });
 
-document.addEventListener("DOMContentLoaded", () => {
-  loadMessages();
+// Real-time updates
+supabase
+  .channel('public:messages')
+  .on(
+    'postgres_changes',
+    { event: 'INSERT', schema: 'public', table: 'messages' },
+    payload => {
+      appendMessage(payload.new);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+  )
+  .subscribe();
 
-  // Optional: Poll every 3 seconds to refresh
-  setInterval(loadMessages, 3000);
-});
+loadMessages();

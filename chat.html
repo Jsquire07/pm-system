@@ -2,25 +2,30 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Live Chat</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+
   <div class="sidebar">
-    <a href="dashboard.html">Dashboard</a>
-    <a href="board.html">Board</a>
-    <a href="chat.html" class="active">Chat</a>
+    <div class="sidebar-content">
+      <div class="sidebar-title">Headlock</div>
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.html" class="sidebar-button">Dashboard</a></li>
+        <li><a href="board.html" class="sidebar-button">Board</a></li>
+        <li><a href="chat.html" class="sidebar-button active">Chat</a></li>
+      </ul>
+    </div>
   </div>
 
-  <main class="content">
+  <div class="dashboard">
     <h1>Live Chat</h1>
-    <div id="chatBox" class="chat-box"></div>
+    <div class="chat-box" id="chatBox"></div>
     <form id="chatForm" class="chat-form">
       <input type="text" id="chatInput" placeholder="Type a message..." required />
-      <button type="submit">Send</button>
+      <button type="submit" class="sidebar-button" style="width:auto;">Send</button>
     </form>
-  </main>
+  </div>
 
   <script type="module" src="js/chat.js"></script>
 </body>

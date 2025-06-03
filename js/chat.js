@@ -4,7 +4,13 @@ const chatBox = document.getElementById('chatBox');
 const chatForm = document.getElementById('chatForm');
 const chatInput = document.getElementById('chatInput');
 
-let username = localStorage.getItem("currentUser") || "Guest";
+let username = localStorage.getItem("currentUser");
+
+if (!username) {
+  username = prompt("Enter your name:");
+  localStorage.setItem("currentUser", username);
+}
+
 
 // Fetch and display old messages
 async function loadMessages() {

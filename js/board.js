@@ -93,7 +93,6 @@ async function deleteColumn(id) {
   loadBoard();
 }
 
-
 async function moveColumn(id, direction) {
   const columns = await getColumns();
   columns.sort((a, b) => a.order - b.order);
@@ -102,12 +101,21 @@ async function moveColumn(id, direction) {
 
   if (index === -1 || swapIndex < 0 || swapIndex >= columns.length) return;
 
-  // Swap
+  // Add animation class
+  document.querySelectorAll('.column').forEach(el => el.classList.add("moving"));
+
+  // Swap order
   const tempOrder = columns[index].order;
   columns[index].order = columns[swapIndex].order;
   columns[swapIndex].order = tempOrder;
 
   await saveColumns(columns);
+
+  // Remove animation class after delay
+  setTimeout(() => {
+    document.querySelectorAll('.column').forEach(el => el.classList.remove("moving"));
+  }, 300);
+
   loadBoard();
 }
 
@@ -135,7 +143,7 @@ async function loadBoard() {
   for (let i = 0; i < columns.length; i++) {
     const col = columns[i];
     const column = document.createElement("div");
-    column.className = "column";
+    column.className = "column fade-in";
     column.dataset.id = col.id;
 
     const filteredTasks = tasks.filter(task =>
@@ -164,14 +172,16 @@ async function loadBoard() {
     `;
 
     container.appendChild(column);
+    setTimeout(() => column.classList.add("active"), 10);
 
     filteredTasks.forEach(task => {
       const card = createCardElement(task);
+      card.classList.add("fade-in");
       column.querySelector(".card-list").appendChild(card);
+      setTimeout(() => card.classList.add("active"), 10);
     });
   }
 }
-
 
 function addCard() {
   openTaskModal();
@@ -312,8 +322,8 @@ function enableDragAndDrop() {
     });
   });
 }
+
 async function moveTask(taskId, direction) {
-  // Get current task
   const { data: taskData, error: taskError } = await supabase
     .from("tasks")
     .select("*")
@@ -332,12 +342,19 @@ async function moveTask(taskId, direction) {
 
   const newStatus = columns[newIndex].id;
 
+  // Animate cards
+  document.querySelectorAll('.card').forEach(el => el.classList.add("moving"));
+  setTimeout(() => {
+    document.querySelectorAll('.card').forEach(el => el.classList.remove("moving"));
+  }, 300);
+
   const { error } = await supabase
     .from("tasks")
     .update({ status: newStatus })
     .eq("id", taskId);
 
   if (error) return console.error("Task move failed:", error);
+
   loadBoard();
 }
 

@@ -715,3 +715,23 @@ canvas {
 .trend-neutral {
   color: #888;
 }
+/* Smooth fade + slide on appearance */
+.column, .card {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.column.fade-in, .card.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.column.fade-in.active, .card.fade-in.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Movement animation (used when switching order) */
+.column.moving, .card.moving {
+  transition: transform 0.3s ease;
+  transform: scale(1.02);
+}

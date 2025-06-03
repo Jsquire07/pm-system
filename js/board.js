@@ -337,54 +337,69 @@ async function moveTask(taskId, direction) {
 
   const currentIndex = columns.findIndex(c => String(c.id) === String(taskData.status));
   const newIndex = currentIndex + direction;
-
   if (newIndex < 0 || newIndex >= columns.length) return;
 
   const newStatus = columns[newIndex].id;
+
   const cardElement = document.querySelector(`.card[data-id="${taskId}"]`);
   if (!cardElement) return;
 
-  const firstRect = cardElement.getBoundingClientRect();
+  const currentColumn = document.querySelector(`.card-list[id="${taskData.status}"]`);
+  const newColumn = document.querySelector(`.card-list[id="${newStatus}"]`);
+  if (!newColumn || !currentColumn) return;
 
-  // Update Supabase
+  const scrollY = window.scrollY;
+
+  // Step 1: Record the initial position of all cards
+  const allCards = document.querySelectorAll('.card');
+  const positions = new Map();
+  allCards.forEach(card => {
+    positions.set(card, card.getBoundingClientRect());
+  });
+
+  // Step 2: Move the card in Supabase
   const { error } = await supabase
     .from("tasks")
     .update({ status: newStatus })
     .eq("id", taskId);
-
   if (error) return console.error("Task move failed:", error);
 
-  // Move DOM element to new column manually
-  const newColumnList = document.querySelector(`.card-list[id="${newStatus}"]`);
-  if (!newColumnList) return;
+  // Step 3: Move card DOM element to new column
+  newColumn.appendChild(cardElement);
 
-  // Store current scroll position to prevent jump
-  const scrollY = window.scrollY;
-
-  // Move the card to the new column in the DOM
-  newColumnList.appendChild(cardElement);
-
-  // Force reflow
-  const lastRect = cardElement.getBoundingClientRect();
-
-  const invertX = firstRect.left - lastRect.left;
-  const invertY = firstRect.top - lastRect.top;
-
-  cardElement.style.transform = `translate(${invertX}px, ${invertY}px)`;
-  cardElement.style.transition = "transform 0s";
-  cardElement.classList.add("animating");
-
-  requestAnimationFrame(() => {
-    cardElement.style.transition = "transform 300ms ease";
-    cardElement.style.transform = "translate(0, 0)";
+  // Step 4: Recalculate positions after the move
+  const newPositions = new Map();
+  allCards.forEach(card => {
+    newPositions.set(card, card.getBoundingClientRect());
   });
 
-  setTimeout(() => {
-    cardElement.style.transform = "";
-    cardElement.style.transition = "";
-    cardElement.classList.remove("animating");
-    window.scrollTo({ top: scrollY }); // maintain scroll position
-  }, 300);
+  // Step 5: Animate cards from old position to new
+  allCards.forEach(card => {
+    const oldRect = positions.get(card);
+    const newRect = newPositions.get(card);
+
+    if (!oldRect || !newRect) return;
+
+    const dx = oldRect.left - newRect.left;
+    const dy = oldRect.top - newRect.top;
+
+    if (dx !== 0 || dy !== 0) {
+      card.style.transform = `translate(${dx}px, ${dy}px)`;
+      card.style.transition = "transform 0s";
+
+      requestAnimationFrame(() => {
+        card.style.transition = "transform 300ms ease";
+        card.style.transform = "translate(0, 0)";
+      });
+
+      setTimeout(() => {
+        card.style.transform = "";
+        card.style.transition = "";
+      }, 300);
+    }
+  });
+
+  window.scrollTo({ top: scrollY });
 }
 
 document.addEventListener("DOMContentLoaded", () => {

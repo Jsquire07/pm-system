@@ -1,6 +1,7 @@
 const chatBox = document.getElementById("chatBox");
 const chatForm = document.getElementById("chatForm");
 const chatInput = document.getElementById("chatInput");
+const supabase = window.supabase;
 
 const user = JSON.parse(localStorage.getItem("loggedInUser")) || { name: "Unknown" };
 

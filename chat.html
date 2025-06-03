@@ -5,8 +5,92 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Chat | PM SYSTEM PROTOTYPE1</title>
   <link rel="stylesheet" href="css/style.css" />
+  <style>
+    main.chat-page {
+      margin-left: 220px;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 1.5rem;
+      box-sizing: border-box;
+    }
+
+    .chat-wrapper {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+
+    .chat-header {
+      font-size: 1.6rem;
+      font-weight: 600;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid #ddd;
+      background: #f4f5f7;
+    }
+
+    .chat-box {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      background: #fff;
+    }
+
+    .message {
+      margin-bottom: 1.25rem;
+    }
+
+    .message .meta {
+      font-size: 0.85rem;
+      color: #555;
+      margin-bottom: 0.2rem;
+    }
+
+    .message .text {
+      font-size: 1rem;
+      background: #f8f9fa;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    .chat-form {
+      display: flex;
+      padding: 1rem;
+      border-top: 1px solid #ddd;
+      background: #f9f9f9;
+    }
+
+    .chat-form input {
+      flex-grow: 1;
+      padding: 0.6rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .chat-form button {
+      margin-left: 0.5rem;
+      padding: 0.6rem 1rem;
+      background-color: #0747a6;
+      color: white;
+      font-size: 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .chat-form button:hover {
+      background-color: #003f91;
+    }
+  </style>
 </head>
 <body>
+
   <div class="sidebar">
     <h2 class="sidebar-title">PM SYSTEM<br>PROTOTYPE1</h2>
     <div class="sidebar-content">
@@ -25,20 +109,21 @@
     </div>
   </div>
 
-  <main class="dashboard">
-    <h1>💬 Team Chat</h1>
-
-    <div id="chatBox" class="chat-box"></div>
-
-    <form id="chatForm" class="chat-form">
-      <input type="text" id="chatInput" placeholder="Type your message..." required />
-      <button type="submit" class="sidebar-button" style="flex-shrink: 0;">Send</button>
-    </form>
+  <main class="chat-page">
+    <div class="chat-wrapper">
+      <div class="chat-header">💬 Team Chat</div>
+      <div id="chatBox" class="chat-box"></div>
+      <form id="chatForm" class="chat-form">
+        <input type="text" id="chatInput" placeholder="Type your message..." required />
+        <button type="submit">Send</button>
+      </form>
+    </div>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    const supabase = window.supabase.createClient(
+    // Supabase client setup
+    window.supabase = window.supabase || supabase.createClient(
       'https://qqlsttamprrcljljcqrk.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxbHN0dGFtcHJyY2xqbGpjcXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTQ2NTcsImV4cCI6MjA2NDQzMDY1N30.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g'
     );

@@ -127,6 +127,8 @@ async function loadBoard() {
 
   columns.sort((a, b) => a.order - b.order);
 
+  enableDragAndDrop();
+
   // Populate filters
   const { data: employees } = await supabase.from('users').select('*');
   const employeeSelect = document.getElementById("filterAssignee");

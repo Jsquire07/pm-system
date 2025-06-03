@@ -345,32 +345,46 @@ async function moveTask(taskId, direction) {
   const cardElement = document.querySelector(`.card[data-id="${taskId}"]`);
   if (!cardElement) return;
 
-  // Animate card out
-  cardElement.classList.add("animating-out");
+  const firstRect = cardElement.getBoundingClientRect();
 
-  // Wait for animation to finish before updating status
-  setTimeout(async () => {
-    const { error } = await supabase
-      .from("tasks")
-      .update({ status: newStatus })
-      .eq("id", taskId);
+  // Update task status in Supabase
+  await supabase
+    .from("tasks")
+    .update({ status: newStatus })
+    .eq("id", taskId);
 
-    if (error) return console.error("Task move failed:", error);
+  // Wait for DOM update
+  await loadBoard();
 
-    await loadBoard();
+  // New card element after reload
+  const newCardElement = document.querySelector(`.card[data-id="${taskId}"]`);
+  if (!newCardElement) return;
 
-    // Animate card in
-    const newCardElement = document.querySelector(`.card[data-id="${taskId}"]`);
-    if (newCardElement) {
-      newCardElement.classList.add("animating-in");
-      setTimeout(() => newCardElement.classList.add("active"), 10);
-      setTimeout(() => {
-        newCardElement.classList.remove("animating-in");
-        newCardElement.classList.remove("active");
-      }, 300);
-    }
+  const lastRect = newCardElement.getBoundingClientRect();
 
-  }, 200); // match CSS transition timing
+  // Invert and play animation
+  const invertX = firstRect.left - lastRect.left;
+  const invertY = firstRect.top - lastRect.top;
+
+  newCardElement.classList.add("animating");
+  newCardElement.style.transform = `translate(${invertX}px, ${invertY}px)`;
+  newCardElement.style.transition = "transform 0s";
+
+  // Trigger reflow
+  newCardElement.getBoundingClientRect();
+
+  // Animate to final position
+  requestAnimationFrame(() => {
+    newCardElement.style.transition = "transform 300ms ease-in-out";
+    newCardElement.style.transform = "translate(0, 0)";
+  });
+
+  // Clean up after animation
+  setTimeout(() => {
+    newCardElement.style.transform = "";
+    newCardElement.style.transition = "";
+    newCardElement.classList.remove("animating");
+  }, 300);
 }
 
 document.addEventListener("DOMContentLoaded", () => {

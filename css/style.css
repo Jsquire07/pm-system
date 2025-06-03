@@ -755,3 +755,11 @@ canvas {
   opacity: 1;
   transform: translateY(0);
 }
+.card {
+  transition: transform 0.3s ease-in-out;
+  position: relative;
+  z-index: 1;
+}
+.card.animating {
+  z-index: 10;
+}

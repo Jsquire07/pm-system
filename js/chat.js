@@ -8,7 +8,8 @@ const chatBox = document.getElementById("chatBox");
 const chatForm = document.getElementById("chatForm");
 const chatInput = document.getElementById("chatInput");
 
-const user = JSON.parse(localStorage.getItem("loggedInUser")) || { name: "Unknown" };
+const user = JSON.parse(localStorage.getItem("loggedInUser")) || {};
+const username = user.name || user.username || "Unknown";
 
 async function loadMessages() {
   const { data, error } = await supabaseClient
@@ -29,14 +30,12 @@ async function loadMessages() {
 function appendMessage({ username, text, created_at }) {
   const div = document.createElement("div");
   div.className = "message";
-
   const timestamp = new Date(created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   div.innerHTML = `
     <div class="meta"><strong>${username || "Unknown"}</strong> ${timestamp}</div>
     <div class="text">${text}</div>
   `;
-
   chatBox.appendChild(div);
 }
 
@@ -45,26 +44,26 @@ chatForm.addEventListener("submit", async (e) => {
   const message = chatInput.value.trim();
   if (!message) return;
 
-  const { error } = await supabaseClient.from("messages").insert([{
-    username: user.name || "Unknown",
-    text: message
-  }]);
+  const { error } = await supabaseClient.from("messages").insert([
+    { username: username, text: message }
+  ]);
 
   if (error) {
     alert("Failed to send message.");
-    console.error("Insert error:", error);
+    console.error(error);
     return;
   }
 
   chatInput.value = "";
+  await loadMessages(); // fallback reload
 });
 
 supabaseClient
-  .channel('messages-realtime')
+  .channel('realtime:messages')
   .on(
     'postgres_changes',
     { event: 'INSERT', schema: 'public', table: 'messages' },
-    payload => {
+    (payload) => {
       appendMessage(payload.new);
       chatBox.scrollTop = chatBox.scrollHeight;
     }

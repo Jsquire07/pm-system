@@ -874,3 +874,7 @@ canvas {
   color: #888;
   padding: 0.5rem 1rem;
 }
+.mention {
+  color: #0077cc;
+  font-weight: bold;
+}

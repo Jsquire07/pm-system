@@ -2,7 +2,7 @@ const { createClient } = supabase;
 
 const supabaseClient = createClient(
   'https://qqlsttamprrcljljcqrk.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxbHN0dGFtcHJyY2xqbGpjcXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTQ2NTcsImV4cCI6MjA2NDQzMDY1N30.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g'
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTQ2NTcsImV4cCI6MjA2NDQzMDY1N30.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g'
 );
 
 const chatBox = document.getElementById("chatBox");
@@ -13,6 +13,7 @@ const typingIndicator = document.getElementById("typingIndicator");
 const user = JSON.parse(localStorage.getItem("loggedInUser")) || { name: "Unknown" };
 const username = user.name || "Unknown";
 
+// 🟦 Consistent user colors
 function stringToColor(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
@@ -33,7 +34,6 @@ function appendMessage({ id, username, text, created_at }) {
   div.dataset.id = id;
 
   const timestamp = new Date(created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
   const color = stringToColor(username);
 
   div.innerHTML = `
@@ -78,12 +78,11 @@ chatForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const text = chatInput.value.trim();
   if (!text) return;
-
   await supabaseClient.from("messages").insert([{ username, text }]);
   chatInput.value = "";
 });
 
-// Typing indicator
+// 👤 Typing indicator
 chatInput.addEventListener("input", () => {
   supabaseClient.from("typing").upsert({ username }, { onConflict: ['username'] });
   clearTimeout(window.__typeClear);
@@ -92,33 +91,52 @@ chatInput.addEventListener("input", () => {
   }, 2000);
 });
 
-// Realtime listeners
-supabaseClient
-  .from("messages")
-  .on("INSERT", payload => appendMessage(payload.new))
-  .on("UPDATE", payload => {
+document.addEventListener("DOMContentLoaded", loadMessages);
+
+// 🔁 Real-time sync with .channel()
+const chatChannel = supabaseClient.channel('realtime:messages')
+  .on('postgres_changes', {
+    event: 'INSERT',
+    schema: 'public',
+    table: 'messages'
+  }, payload => {
+    appendMessage(payload.new);
+  })
+  .on('postgres_changes', {
+    event: 'UPDATE',
+    schema: 'public',
+    table: 'messages'
+  }, payload => {
     const el = document.querySelector(`.text[data-id="${payload.new.id}"]`);
     if (el) el.innerHTML = highlightMentions(payload.new.text);
   })
-  .on("DELETE", payload => {
+  .on('postgres_changes', {
+    event: 'DELETE',
+    schema: 'public',
+    table: 'messages'
+  }, payload => {
     const el = document.querySelector(`.message[data-id="${payload.old.id}"]`);
     if (el) el.remove();
   })
   .subscribe();
 
-// Typing listeners
-supabaseClient
-  .from("typing")
-  .on("INSERT", payload => {
+const typingChannel = supabaseClient.channel('realtime:typing')
+  .on('postgres_changes', {
+    event: 'INSERT',
+    schema: 'public',
+    table: 'typing'
+  }, payload => {
     if (payload.new.username !== username) {
       typingIndicator.textContent = `${payload.new.username} is typing...`;
     }
   })
-  .on("DELETE", payload => {
+  .on('postgres_changes', {
+    event: 'DELETE',
+    schema: 'public',
+    table: 'typing'
+  }, payload => {
     if (payload.old.username !== username) {
-      typingIndicator.textContent = "";
+      typingIndicator.textContent = '';
     }
   })
   .subscribe();
-
-document.addEventListener("DOMContentLoaded", loadMessages);

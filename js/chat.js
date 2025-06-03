@@ -1,55 +1,71 @@
 const supabase = window.supabase.createClient(
   "https://qqlsttamprrcljljcqrk.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxbHN0dGFtcHJyY2xqbGpjcXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTQ2NTcsImV4cCI6MjA2NDQzMDY1N30.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." // use your actual public anon key
 );
 
-const chatMessages = document.getElementById("chat-messages");
-const chatInput = document.getElementById("chatInput");
-const chatForm = document.getElementById("chatForm");
-const currentUser = JSON.parse(localStorage.getItem("loggedInUser")) || { name: "Unknown" };
+const messagesContainer = document.getElementById("messages");
+const form = document.getElementById("chatForm");
+const input = document.getElementById("chatInput");
 
-async function loadMessages() {
-  const { data, error } = await supabase
-    .from("messages")
-    .select("*")
-    .order("created_at", { ascending: true });
+const user = JSON.parse(localStorage.getItem("loggedInUser")) || { name: "Unknown" };
 
-  if (error) return console.error("Failed to load messages:", error);
-
-  chatMessages.innerHTML = "";
-  data.forEach(msg => {
-    const div = document.createElement("div");
-    div.textContent = `${msg.username}: ${msg.text}`;
-    chatMessages.appendChild(div);
-  });
-
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-chatForm.addEventListener("submit", async (e) => {
+form.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const text = chatInput.value.trim();
+  const text = input.value.trim();
   if (!text) return;
 
   const { error } = await supabase.from("messages").insert([
     {
-      username: currentUser.name,
-      text
+      username: user.name,
+      text: text
     }
   ]);
 
   if (error) {
     alert("Error sending message.");
-    console.error(error);
-  } else {
-    chatInput.value = "";
-    loadMessages();
+    return;
   }
+
+  input.value = "";
 });
 
-function logout() {
-  localStorage.removeItem("loggedInUser");
-  window.location.href = "login.html";
+function formatTimestamp(iso) {
+  const date = new Date(iso);
+  return date.toLocaleString("en-AU", {
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  });
 }
 
-document.addEventListener("DOMContentLoaded", loadMessages);
+function renderMessage(msg) {
+  const div = document.createElement("div");
+  div.className = "message" + (msg.username === user.name ? " you" : "");
+  div.innerHTML = `
+    <div class="meta">${msg.username} • ${formatTimestamp(msg.created_at)}</div>
+    <div>${msg.text}</div>
+  `;
+  messagesContainer.appendChild(div);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+async function loadMessages() {
+  const { data, error } = await supabase.from("messages").select("*").order("created_at", { ascending: true });
+  if (error) return alert("Failed to load messages.");
+
+  messagesContainer.innerHTML = "";
+  data.forEach(renderMessage);
+}
+
+loadMessages();
+
+supabase
+  .channel('realtime:messages')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, (payload) => {
+    if (payload.eventType === "INSERT") {
+      renderMessage(payload.new);
+    }
+  })
+  .subscribe();

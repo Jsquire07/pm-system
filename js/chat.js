@@ -60,10 +60,10 @@ chatForm.addEventListener("submit", async (e) => {
 });
 
 supabaseClient
-  .channel('chat-room')
-  .on(
-    'postgres_changes',
-    { event: 'INSERT', schema: 'public', table: 'messages' },
+  .channel('public:messages')
+  .onPostgresChanges(
+    'INSERT',
+    { schema: 'public', table: 'messages' },
     payload => {
       appendMessage(payload.new);
       chatBox.scrollTop = chatBox.scrollHeight;

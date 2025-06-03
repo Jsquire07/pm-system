@@ -770,3 +770,26 @@ canvas {
 .card {
   transition: transform 0.3s ease;
 }
+.chat-box {
+  height: 400px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  padding: 1rem;
+  background: #f9f9f9;
+  margin-bottom: 1rem;
+}
+.message {
+  margin-bottom: 0.5rem;
+}
+.timestamp {
+  color: gray;
+  font-size: 0.8em;
+  margin-left: 0.5rem;
+}
+.chat-form {
+  display: flex;
+  gap: 0.5rem;
+}
+.chat-form input {
+  flex: 1;
+}

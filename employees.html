@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Employee Management | PM SYSTEM PROTOTYPE1</title>
+  <link rel="stylesheet" href="css/style.css" />
+
+</head>
+
+<body>
+  <div class="sidebar">
+    <h2 class="sidebar-title">PM SYSTEM<br>PROTOTYPE1</h2>
+    <div class="sidebar-content">
+      <nav class="sidebar-nav">
+        <ul>
+          <li><a href="dashboard.html" class="sidebar-button">🏠 Dashboard</a></li>
+          <li><a href="board.html" class="sidebar-button">📋 Board</a></li>
+          <li><a href="settings.html" class="sidebar-button">⚙️ Settings</a></li>
+          <li><a href="employees.html" class="sidebar-button">👥 Employees</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="sidebar-footer">
+      <button onclick="logout()" class="sidebar-button logout-button">🚪 Logout</button>
+    </div>
+  </div>
+  <main class="employees-view">
+    <div class="employees-container">
+      <h1>Manage Employees</h1>
+
+      <form id="addEmployeeForm" class="employee-form">
+        <input type="text" id="emp-name" placeholder="Name" required />
+        <input type="text" id="emp-role" placeholder="Role (e.g. Developer)" required />
+        <input type="email" id="emp-email" placeholder="Email" required />
+        <input type="password" id="emp-password" placeholder="Password" required />
+        <button type="submit">Add Employee</button>
+      </form>
+
+      <h2>Current Employees</h2>
+      <ul id="employeeList" class="employee-list"></ul>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.supabase = supabase.createClient(
+
+      'https://qqlsttamprrcljljcqrk.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxbHN0dGFtcHJyY2xqbGpjcXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTQ2NTcsImV4cCI6MjA2NDQzMDY1N30.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g'
+
+    );
+  </script>
+
+  <script src="js/employees.js"></script>
+
+
+</body>
+
+</html>

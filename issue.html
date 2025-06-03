@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Issue View | PM SYSTEM PROTOTYPE1</title>
+  <link rel="stylesheet" href="css/style.css" />
+
+  <style>
+    .issue-view {
+      padding: 2rem;
+      margin-left: 220px;
+    }
+
+    .issue-container {
+      max-width: 700px;
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .issue-container h1 {
+      font-size: 28px;
+      margin-bottom: 0.5rem;
+    }
+
+    .issue-container p {
+      font-size: 16px;
+      margin-bottom: 1rem;
+    }
+
+    .issue-container label {
+      font-weight: bold;
+      display: block;
+      margin-top: 1rem;
+    }
+
+    .issue-container textarea,
+    .issue-container select,
+    .issue-container input[type="date"] {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.25rem;
+      font-size: 16px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+
+    .issue-actions {
+      margin-top: 2rem;
+    }
+
+    .issue-actions button {
+      padding: 0.5rem 1rem;
+      font-size: 16px;
+      margin-right: 0.5rem;
+    }
+
+    .issue-actions a {
+      color: #4a4aff;
+      text-decoration: none;
+    }
+
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 200px;
+      height: 100vh;
+      background: #003f91;
+      color: white;
+      padding: 1rem;
+    }
+
+    .sidebar h2 {
+      font-size: 20px;
+      margin-bottom: 1rem;
+    }
+
+    .sidebar nav ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .sidebar nav ul li {
+      margin: 0.5rem 0;
+    }
+
+    .sidebar nav ul li a {
+      color: white;
+      text-decoration: none;
+    }
+
+    .sidebar nav ul li.active a {
+      font-weight: bold;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="sidebar">
+    <h2 class="sidebar-title">PM SYSTEM<br>PROTOTYPE1</h2>
+    <div class="sidebar-content">
+      <nav class="sidebar-nav">
+        <ul>
+          <li><a href="dashboard.html" class="sidebar-button">🏠 Dashboard</a></li>
+          <li><a href="board.html" class="sidebar-button">📋 Board</a></li>
+          <li><a href="settings.html" class="sidebar-button">⚙️ Settings</a></li>
+          <li><a href="employees.html" class="sidebar-button">👥 Employees</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="sidebar-footer">
+      <button onclick="logout()" class="sidebar-button logout-button">🚪 Logout</button>
+    </div>
+  </div>
+
+  <main class="issue-view">
+    <div class="issue-container">
+      <h1 id="issue-title">Loading...</h1>
+      <p><strong>Status:</strong> <span id="issue-status">Loading...</span></p>
+
+      <label for="issue-description">Description:</label>
+      <textarea id="issue-description" rows="6" placeholder="Enter description..."></textarea>
+
+      <label for="assignee">Assignee:</label>
+      <select id="assignee"></select>
+
+      <label for="priority">Priority:</label>
+      <select id="priority">
+        <option value="Low">Low</option>
+        <option value="Medium" selected>Medium</option>
+        <option value="High">High</option>
+      </select>
+
+      <label for="due-date">Due Date:</label>
+      <input type="date" id="due-date" />
+
+      <label for="due-time">Due Time:</label>
+      <input type="time" id="due-time" />
+
+      <label for="category">Category:</label>
+      <select id="category">
+        <option value="Scripting">Scripting</option>
+        <option value="Animation">Animation</option>
+        <option value="Testing">Testing</option>
+        <option value="UI/UX">UI/UX</option>
+        <option value="Worldbuilding">Worldbuilding</option>
+        <option value="Narrative">Narrative</option>
+        <option value="Audio">Audio</option>
+        <option value="Community">Community</option>
+      </select>
+
+      <div class="issue-actions">
+        <button onclick="saveIssueChanges()">Save</button>
+        <button onclick="deleteIssue()">Delete</button>
+        <a href="board.html">Back to Board</a>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://qqlsttamprrcljljcqrk.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxbHN0dGFtcHJyY2xqbGpjcXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTQ2NTcsImV4cCI6MjA2NDQzMDY1N30.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g'
+    );
+  </script>
+
+  <script src="js/issue.js"></script>
+</body>
+
+</html>

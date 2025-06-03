@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard | PM SYSTEM PROTOTYPE1</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+</head>
+<body>
+  <div class="sidebar">
+    <h2 class="sidebar-title">PM SYSTEM<br>PROTOTYPE1</h2>
+    <div class="sidebar-content">
+      <nav class="sidebar-nav">
+        <ul>
+          <li><a href="dashboard.html" class="sidebar-button active">🏠 Dashboard</a></li>
+          <li><a href="board.html" class="sidebar-button">📋 Board</a></li>
+          <li><a href="settings.html" class="sidebar-button">⚙️ Settings</a></li>
+          <li><a href="employees.html" class="sidebar-button">👥 Employees</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="sidebar-footer">
+      <button onclick="logout()" class="sidebar-button logout-button">🚪 Logout</button>
+    </div>
+  </div>
+
+  <main class="dashboard">
+    <h1 id="welcomeMessage">Welcome!</h1>
+
+    <section class="grid">
+
+      <div class="card chart">
+        <h2>📈 Project Summary</h2>
+        <canvas id="summaryChart"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>🔥 Productivity Score</h2>
+        <p id="productivityScore">0%</p>
+        <small id="productivityDelta" style="color: grey;">↔ No change</small><br>
+        <small>Based on total vs completed tasks.</small>
+      </div>
+
+      <div class="card">
+        <h2>⏳ Avg Completion Time</h2>
+        <p id="avgCompletion">0 days</p>
+        <small id="longestTask">Longest: 0d</small><br>
+        <small id="shortestTask">Shortest: 0d</small>
+      </div>
+
+      <div class="card">
+        <h2>📎 Task Shortcuts</h2>
+        <ul id="quickLinks"></ul>
+      </div>
+
+      <div class="card">
+        <h2>📊 Trends</h2>
+        <canvas id="trendChart"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>👥 Personal vs Team Stats</h2>
+        <canvas id="teamChart"></canvas>
+      </div>
+
+    </section>
+  </main>
+
+  <script src="js/utils.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

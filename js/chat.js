@@ -13,7 +13,6 @@ const typingIndicator = document.getElementById("typingIndicator");
 const user = JSON.parse(localStorage.getItem("loggedInUser")) || { name: "Unknown" };
 const username = user.name || "Unknown";
 
-// Generate a consistent color per username
 function stringToColor(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
@@ -52,87 +51,70 @@ function appendMessage({ id, username, text, created_at }) {
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
+async function editMessage(id) {
+  const el = document.querySelector(`.text[data-id="${id}"]`);
+  const current = el?.textContent || "";
+  const updated = prompt("Edit your message:", current);
+  if (updated && updated !== current) {
+    await supabaseClient.from("messages").update({ text: updated }).eq("id", id);
+  }
+}
+
 async function deleteMessage(id) {
   await supabaseClient.from("messages").delete().eq("id", id);
 }
 
-async function editMessage(id) {
-  const current = document.querySelector(`.text[data-id="${id}"]`);
-  const newText = prompt("Edit your message:", current.textContent);
-  if (newText && newText !== current.textContent) {
-    await supabaseClient.from("messages").update({ text: newText }).eq("id", id);
-  }
-}
-
 async function loadMessages() {
-  const { data, error } = await supabaseClient
+  const { data } = await supabaseClient
     .from("messages")
     .select("*")
     .order("created_at", { ascending: true });
 
-  if (error) return console.error("Failed to load messages:", error);
-
-  if (!window.__initialMessageIDs) window.__initialMessageIDs = new Set();
-  data.forEach(msg => {
-    appendMessage(msg);
-    window.__initialMessageIDs.add(msg.id);
-  });
+  chatBox.innerHTML = "";
+  data.forEach(appendMessage);
 }
 
 chatForm.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const message = chatInput.value.trim();
-  if (!message) return;
+  const text = chatInput.value.trim();
+  if (!text) return;
 
-  const { error } = await supabaseClient.from("messages").insert([
-    { username, text: message }
-  ]);
-
-  if (!error) chatInput.value = "";
+  await supabaseClient.from("messages").insert([{ username, text }]);
+  chatInput.value = "";
 });
 
+// Typing indicator
 chatInput.addEventListener("input", () => {
   supabaseClient.from("typing").upsert({ username }, { onConflict: ['username'] });
-
-  clearTimeout(window.__typingTimeout);
-  window.__typingTimeout = setTimeout(() => {
+  clearTimeout(window.__typeClear);
+  window.__typeClear = setTimeout(() => {
     supabaseClient.from("typing").delete().eq("username", username);
   }, 2000);
 });
 
-// Real-time: INSERT, UPDATE, DELETE
+// Realtime listeners
 supabaseClient
-  .channel('chat-sync')
-  .on('postgres_changes', {
-    event: '*',
-    schema: 'public',
-    table: 'messages'
-  }, payload => {
-    const { eventType, new: newMsg, old: oldMsg } = payload;
-
-    if (eventType === 'INSERT') {
-      if (!window.__initialMessageIDs?.has(newMsg.id)) appendMessage(newMsg);
-    } else if (eventType === 'UPDATE') {
-      const textEl = document.querySelector(`.text[data-id="${newMsg.id}"]`);
-      if (textEl) textEl.innerHTML = highlightMentions(newMsg.text);
-    } else if (eventType === 'DELETE') {
-      const msgEl = document.querySelector(`.message[data-id="${oldMsg.id}"]`);
-      if (msgEl) msgEl.remove();
-    }
-
-    chatBox.scrollTop = chatBox.scrollHeight;
+  .from("messages")
+  .on("INSERT", payload => appendMessage(payload.new))
+  .on("UPDATE", payload => {
+    const el = document.querySelector(`.text[data-id="${payload.new.id}"]`);
+    if (el) el.innerHTML = highlightMentions(payload.new.text);
+  })
+  .on("DELETE", payload => {
+    const el = document.querySelector(`.message[data-id="${payload.old.id}"]`);
+    if (el) el.remove();
   })
   .subscribe();
 
-// Real-time: Typing Indicator
+// Typing listeners
 supabaseClient
-  .channel('typing-channel')
-  .on('postgres_changes', { event: 'INSERT', table: 'typing' }, payload => {
+  .from("typing")
+  .on("INSERT", payload => {
     if (payload.new.username !== username) {
       typingIndicator.textContent = `${payload.new.username} is typing...`;
     }
   })
-  .on('postgres_changes', { event: 'DELETE', table: 'typing' }, payload => {
+  .on("DELETE", payload => {
     if (payload.old.username !== username) {
       typingIndicator.textContent = "";
     }

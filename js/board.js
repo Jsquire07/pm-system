@@ -304,21 +304,81 @@ function createCardElement(task) {
 
 
 function enableDragAndDrop() {
-  document.querySelectorAll(".card-list").forEach((column) => {
-    column.addEventListener("dragover", (e) => e.preventDefault());
+  document.querySelectorAll(".card").forEach(card => {
+    card.setAttribute("draggable", true);
+    card.addEventListener("dragstart", (e) => {
+      e.dataTransfer.setData("text/plain", card.dataset.id);
+      e.dataTransfer.effectAllowed = "move";
+    });
+  });
+
+  document.querySelectorAll(".card-list").forEach(column => {
+    column.addEventListener("dragover", (e) => {
+      e.preventDefault();
+    });
 
     column.addEventListener("drop", async (e) => {
       e.preventDefault();
       const taskId = e.dataTransfer.getData("text/plain");
+      const cardElement = document.querySelector(`.card[data-id="${taskId}"]`);
+      if (!cardElement) return;
 
-      const { data: tasks } = await supabase.from("tasks").select("*").eq("id", taskId);
-      const task = tasks?.[0];
-      if (!task) return;
+      const currentColumnId = cardElement.closest('.card-list')?.id;
+      const newColumnId = column.id;
+      if (currentColumnId === newColumnId) return;
 
-      const newStatus = column.id;
+      const scrollY = window.scrollY;
 
-      await supabase.from("tasks").update({ status: newStatus }).eq("id", taskId);
-      loadBoard();
+      // Get all cards' positions before DOM update
+      const allCards = document.querySelectorAll(".card");
+      const positions = new Map();
+      allCards.forEach(card => {
+        positions.set(card, card.getBoundingClientRect());
+      });
+
+      // Update in Supabase
+      const { error } = await supabase
+        .from("tasks")
+        .update({ status: newColumnId })
+        .eq("id", taskId);
+
+      if (error) return console.error("Task update error:", error);
+
+      // Move DOM card to new column
+      column.appendChild(cardElement);
+
+      // Get all cards' new positions
+      const newPositions = new Map();
+      allCards.forEach(card => {
+        newPositions.set(card, card.getBoundingClientRect());
+      });
+
+      // Animate position changes
+      allCards.forEach(card => {
+        const oldRect = positions.get(card);
+        const newRect = newPositions.get(card);
+        if (!oldRect || !newRect) return;
+
+        const dx = oldRect.left - newRect.left;
+        const dy = oldRect.top - newRect.top;
+
+        if (dx !== 0 || dy !== 0) {
+          card.style.transform = `translate(${dx}px, ${dy}px)`;
+          card.style.transition = "transform 0s";
+
+          requestAnimationFrame(() => {
+            card.style.transition = "transform 300ms ease";
+            card.style.transform = "translate(0, 0)";
+          });
+
+          setTimeout(() => {
+            card.style.transform = "";
+            card.style.transition = "";
+          }, 300);
+        }
+      });
+
+      window.scrollTo({ top: scrollY });
     });
   });
 }

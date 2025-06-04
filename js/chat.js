@@ -8,13 +8,23 @@ const supabaseClient = createClient(
 const chatBox = document.getElementById("chatBox");
 const chatForm = document.getElementById("chatForm");
 const chatInput = document.getElementById("chatInput");
+const typingIndicator = document.getElementById("typingIndicator");
 
 const user = JSON.parse(localStorage.getItem("loggedInUser")) || {};
 const username = user.name || user.username || "Unknown";
 
 let lastMessageId = 0;
+const userColors = {};
 
-// Load all messages on page load
+function getUserColor(name) {
+  if (!userColors[name]) {
+    const hash = name.split("").reduce((a, b) => a + b.charCodeAt(0), 0);
+    const colors = ["#4fc3f7", "#81c784", "#ffb74d", "#e57373", "#ba68c8"];
+    userColors[name] = colors[hash % colors.length];
+  }
+  return userColors[name];
+}
+
 async function loadMessages(initial = false) {
   const { data, error } = await supabaseClient
     .from("messages")
@@ -38,29 +48,60 @@ async function loadMessages(initial = false) {
   scrollToBottom();
 }
 
-// Append message
-function appendMessage({ username, text, created_at }) {
+function appendMessage({ id, username, text, created_at }) {
   const div = document.createElement("div");
   div.className = "message";
+  div.dataset.id = id;
+
   const timestamp = new Date(created_at).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
   });
 
+  const isMine = username === user.name;
+  const userColor = getUserColor(username);
+  const highlightedText = text.replace(/@(\w+)/g, '<span class="mention">@$1</span>');
+
   div.innerHTML = `
-    <div class="meta"><strong>${username || "Unknown"}</strong> ${timestamp}</div>
-    <div class="text">${text}</div>
+    <div class="meta" style="color: ${userColor}">
+      <strong>${username || "Unknown"}</strong>
+      <span class="timestamp">${timestamp}</span>
+      ${isMine ? `
+        <button class="edit-btn">✏️</button>
+        <button class="delete-btn">🗑</button>
+      ` : ""}
+    </div>
+    <div class="text">${highlightedText}</div>
   `;
 
   chatBox.appendChild(div);
+
+  if (isMine) {
+    div.querySelector(".edit-btn").onclick = () => editMessage(id, text);
+    div.querySelector(".delete-btn").onclick = () => deleteMessage(id, div);
+  }
 }
 
-// Scroll to bottom
-function scrollToBottom() {
-  chatBox.scrollTop = chatBox.scrollHeight;
+function editMessage(id, oldText) {
+  const newText = prompt("Edit your message:", oldText);
+  if (newText && newText !== oldText) {
+    supabaseClient
+      .from("messages")
+      .update({ text: newText })
+      .eq("id", id);
+  }
 }
 
-// Handle message send
+function deleteMessage(id, element) {
+  if (confirm("Delete this message?")) {
+    supabaseClient
+      .from("messages")
+      .delete()
+      .eq("id", id);
+    element.remove();
+  }
+}
+
 chatForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const message = chatInput.value.trim();
@@ -82,8 +123,26 @@ chatForm.addEventListener("submit", async (e) => {
   chatInput.value = "";
 });
 
-// Load initial messages
+chatInput.addEventListener("input", () => {
+  typingIndicator.textContent = `${username} is typing...`;
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(() => typingIndicator.textContent = "", 1000);
+});
+
+let typingTimeout;
+let isAtBottom = true;
+
+chatBox.addEventListener("scroll", () => {
+  isAtBottom = chatBox.scrollTop + chatBox.clientHeight >= chatBox.scrollHeight - 20;
+});
+
+function scrollToBottom() {
+  if (isAtBottom) {
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   loadMessages(true);
-  setInterval(() => loadMessages(false), 1000); // check every second
+  setInterval(() => loadMessages(false), 1000);
 });

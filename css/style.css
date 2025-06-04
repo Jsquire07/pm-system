@@ -878,3 +878,22 @@ canvas {
   color: #0077cc;
   font-weight: bold;
 }
+.mention {
+  background: #ffff99;
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.message .edit-btn, .message .delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-left: 6px;
+  font-size: 14px;
+  color: #888;
+}
+
+.message .edit-btn:hover, .message .delete-btn:hover {
+  color: #000;
+}

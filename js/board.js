@@ -15,12 +15,31 @@ let currentFilters = {
 };
 
 async function getTasks() {
-  const { data, error } = await supabase.from("tasks").select("*").eq("board_id", boardId);
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("board_id", boardId);
+
+  if (error) {
+    console.error("Error fetching tasks:", error.message);
+    return [];
+  }
+
   return data || [];
 }
 
 async function getColumns() {
-  const { data, error } = await supabase.from("columns").select("*").eq("board_id", boardId).order("order");
+  const { data, error } = await supabase
+    .from("columns")
+    .select("*")
+    .eq("board_id", boardId)
+    .order("order", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching columns:", error.message);
+    return [];
+  }
+
   return data || [];
 }
 
@@ -62,13 +81,16 @@ document.getElementById("columnForm").addEventListener("submit", async (e) => {
     }
   } else {
     const newColumn = {
-      id: Date.now(),
       name,
       order: columns.length,
       created_at: new Date().toISOString(),
       board_id: boardId
     };
-    await supabase.from("columns").insert([newColumn]);
+
+    const { error } = await supabase.from("columns").insert([newColumn]);
+    if (error) {
+      console.error("Error creating column:", error.message);
+    }
   }
 
   closeColumnModal();

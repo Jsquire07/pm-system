@@ -1,13 +1,17 @@
-const { createClient } = supabase;
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-const supabaseClient = createClient(
-  'https://qqlsttamprrcljljcqrk.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxbHN0dGFtcHJyY2xqbGpjcXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTQ2NTcsImV4cCI6MjA2NDQzMDY1N30.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g'
+const supabase = createClient(
+  "https://qqlsttamprrcljljcqrk.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwiaWF0IjoxNzQ4ODU0NjU3LCJleHAiOjIwNjQ0MzA2NTd9.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g"
 );
 
 const chatBox = document.getElementById("chatBox");
 const chatForm = document.getElementById("chatForm");
 const chatInput = document.getElementById("chatInput");
+const imageInput = document.getElementById("imageInput");
+const cameraButton = document.getElementById("cameraButton");
+const cameraStream = document.getElementById("cameraStream");
+const cameraCanvas = document.getElementById("cameraCanvas");
 const typingIndicator = document.getElementById("typingIndicator");
 
 const user = JSON.parse(localStorage.getItem("loggedInUser")) || {};
@@ -25,8 +29,37 @@ function getUserColor(name) {
   return userColors[name];
 }
 
+function scrollToBottom() {
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function appendMessage({ id, username, text, created_at, image_url }) {
+  const div = document.createElement("div");
+  div.className = "message";
+  div.dataset.id = id;
+
+  const timestamp = new Date(created_at).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const userColor = getUserColor(username);
+  const highlightedText = text?.replace(/@(\\w+)/g, '<span class="mention">@$1</span>');
+
+  div.innerHTML = `
+    <div class="meta" style="color: ${userColor}">
+      <strong>${username}</strong>
+      <span class="timestamp">${timestamp}</span>
+    </div>
+    ${highlightedText ? `<div class="text">${highlightedText}</div>` : ""}
+    ${image_url ? `<img src="${image_url}" style="max-width: 200px; margin-top: 5px;">` : ""}
+  `;
+
+  chatBox.appendChild(div);
+}
+
 async function loadMessages(initial = false) {
-  const { data, error } = await supabaseClient
+  const { data, error } = await supabase
     .from("messages")
     .select("*")
     .order("id", { ascending: true });
@@ -48,70 +81,33 @@ async function loadMessages(initial = false) {
   scrollToBottom();
 }
 
-function appendMessage({ id, username, text, created_at }) {
-  const div = document.createElement("div");
-  div.className = "message";
-  div.dataset.id = id;
-
-  const timestamp = new Date(created_at).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
-  const isMine = username === user.name;
-  const userColor = getUserColor(username);
-  const highlightedText = text.replace(/@(\w+)/g, '<span class="mention">@$1</span>');
-
-  div.innerHTML = `
-    <div class="meta" style="color: ${userColor}">
-      <strong>${username || "Unknown"}</strong>
-      <span class="timestamp">${timestamp}</span>
-      ${isMine ? `
-        <button class="edit-btn">✏️</button>
-        <button class="delete-btn">🗑</button>
-      ` : ""}
-    </div>
-    <div class="text">${highlightedText}</div>
-  `;
-
-  chatBox.appendChild(div);
-
-  if (isMine) {
-    div.querySelector(".edit-btn").onclick = () => editMessage(id, text);
-    div.querySelector(".delete-btn").onclick = () => deleteMessage(id, div);
-  }
-}
-
-function editMessage(id, oldText) {
-  const newText = prompt("Edit your message:", oldText);
-  if (newText && newText !== oldText) {
-    supabaseClient
-      .from("messages")
-      .update({ text: newText })
-      .eq("id", id);
-  }
-}
-
-function deleteMessage(id, element) {
-  if (confirm("Delete this message?")) {
-    supabaseClient
-      .from("messages")
-      .delete()
-      .eq("id", id);
-    element.remove();
-  }
-}
-
 chatForm.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const message = chatInput.value.trim();
-  if (!message) return;
 
-  const { error } = await supabaseClient.from("messages").insert([
-    {
-      username,
-      text: message,
-    },
+  const text = chatInput.value.trim();
+  let imageUrl = null;
+
+  if (imageInput.files.length > 0) {
+    const file = imageInput.files[0];
+    const fileName = `${Date.now()}_${file.name}`;
+
+    const { data, error: uploadError } = await supabase.storage
+      .from("chat-images")
+      .upload(fileName, file, { upsert: true });
+
+    if (uploadError) return alert("Image upload failed");
+
+    const { data: publicUrl } = supabase.storage
+      .from("chat-images")
+      .getPublicUrl(fileName);
+
+    imageUrl = publicUrl?.publicUrl;
+  }
+
+  if (!text && !imageUrl) return;
+
+  const { error } = await supabase.from("messages").insert([
+    { username, text, image_url: imageUrl },
   ]);
 
   if (error) {
@@ -121,28 +117,50 @@ chatForm.addEventListener("submit", async (e) => {
   }
 
   chatInput.value = "";
+  imageInput.value = "";
 });
+
+setInterval(() => loadMessages(false), 1000);
+loadMessages(true);
 
 chatInput.addEventListener("input", () => {
   typingIndicator.textContent = `${username} is typing...`;
   clearTimeout(typingTimeout);
-  typingTimeout = setTimeout(() => typingIndicator.textContent = "", 1000);
+  typingTimeout = setTimeout(() => (typingIndicator.textContent = ""), 1000);
 });
 
 let typingTimeout;
-let isAtBottom = true;
 
-chatBox.addEventListener("scroll", () => {
-  isAtBottom = chatBox.scrollTop + chatBox.clientHeight >= chatBox.scrollHeight - 20;
-});
+cameraButton.addEventListener("click", async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    cameraStream.srcObject = stream;
+    cameraStream.hidden = false;
 
-function scrollToBottom() {
-  if (isAtBottom) {
-    chatBox.scrollTop = chatBox.scrollHeight;
+    setTimeout(async () => {
+      const context = cameraCanvas.getContext("2d");
+      context.drawImage(cameraStream, 0, 0, 200, 150);
+      cameraCanvas.toBlob(async (blob) => {
+        const fileName = `camera_${Date.now()}.jpg`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("chat-images")
+          .upload(fileName, blob, { upsert: true });
+
+        const { data: publicUrl } = supabase.storage
+          .from("chat-images")
+          .getPublicUrl(fileName);
+
+        await supabase.from("messages").insert([
+          { username, text: "", image_url: publicUrl?.publicUrl },
+        ]);
+
+        stream.getTracks().forEach((track) => track.stop());
+        cameraStream.hidden = true;
+      }, "image/jpeg");
+    }, 1000);
+  } catch (err) {
+    alert("Could not access camera.");
+    console.error(err);
   }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  loadMessages(true);
-  setInterval(() => loadMessages(false), 1000);
 });

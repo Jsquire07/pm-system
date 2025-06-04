@@ -5,38 +5,39 @@ if (!user) {
   return;
 }
 
+document.addEventListener("DOMContentLoaded", async () => {
+  const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+  if (!loggedInUser) {
+    window.location.href = "login.html";
+    return;
+  }
 
-document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("createBoardForm");
-  const successMsg = document.getElementById("successMessage");
-
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const boardName = document.getElementById("boardName").value.trim();
 
-    if (!boardName) return;
+    const boardName = document.getElementById("boardName").value;
 
-    const user = JSON.parse(localStorage.getItem("currentUser"));
-    if (!user || !user.email) {
-      alert("You must be logged in to create a board.");
-      return;
-    }
-
-    const joinCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-    const { data, error } = await supabase.from("boards").insert([{
-      name: boardName,
-      owner: user.email,
-      join_code: joinCode
-    }]);
+    // Insert board into Supabase
+    const { data, error } = await supabase
+      .from("boards")
+      .insert([
+        {
+          name: boardName,
+          owner_id: loggedInUser.id,
+          code: Math.floor(100000 + Math.random() * 900000).toString(),
+        },
+      ]);
 
     if (error) {
-      console.error("Error creating board:", error);
-      alert("Failed to create board.");
-      return;
-    }
+      console.error("Error creating board:", error.message);
+    } else {
+      // Optional: Add the creator as a member
+      await supabase.from("board_members").insert([
+        { board_id: data[0].id, user_id: loggedInUser.id },
+      ]);
 
-    successMsg.textContent = `✅ Board created! Share this join code: ${joinCode}`;
-    form.reset();
+      window.location.href = "dashboard.html";
+    }
   });
 });

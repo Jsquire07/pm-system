@@ -71,39 +71,50 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 async function loadMembers(boardId, ownerId) {
-  const { data: members, error } = await supabase
+  // Step 1: Get all members of this board
+  const { data: members, error: memberError } = await supabase
     .from("board_members")
-    .select("*, users(name, email)")
+    .select("*")
     .eq("board_id", boardId);
 
-  if (error) {
-    console.error("Error loading members:", error.message);
+  if (memberError) {
+    console.error("Error loading board members:", memberError.message);
     return;
   }
 
+  // Step 2: Get all users
+  const { data: users, error: userError } = await supabase
+    .from("users")
+    .select("id, name, email");
+
+  if (userError) {
+    console.error("Error loading users:", userError.message);
+    return;
+  }
+
+  // Step 3: Match each board member with their user details
   const container = document.getElementById("membersList");
   container.innerHTML = "";
 
   members.forEach(member => {
-    const isOwner = member.user_id === ownerId;
+    const user = users.find(u => String(u.id) === String(member.user_id));
+    const isOwner = String(member.user_id) === String(ownerId);
 
     const div = document.createElement("div");
     div.className = "member-row";
-
     div.innerHTML = `
-      <strong>${member.users?.name || "Unknown User"}</strong>
-      <span>${member.users?.email || ""}</span>
+      <strong>${user?.name || "Unknown"}</strong>
+      <span>${user?.email || ""}</span>
       <select ${isOwner ? "disabled" : ""} data-user="${member.user_id}">
         <option value="view" ${member.permission === "view" ? "selected" : ""}>View Only</option>
         <option value="edit" ${member.permission === "edit" ? "selected" : ""}>Can Edit</option>
       </select>
       ${isOwner ? `<span class="badge">Owner</span>` : `<button data-kick="${member.user_id}">Kick</button>`}
     `;
-
     container.appendChild(div);
   });
 
-  // Permission change handler
+  // Change permission handler
   container.querySelectorAll("select").forEach(select => {
     select.addEventListener("change", async (e) => {
       const userId = e.target.dataset.user;
@@ -138,7 +149,7 @@ async function loadMembers(boardId, ownerId) {
         alert("Failed to remove member.");
         console.error(error);
       } else {
-        loadMembers(boardId, ownerId);
+        loadMembers(boardId, ownerId); // reload
       }
     });
   });

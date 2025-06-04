@@ -1,76 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Board Settings | PM SYSTEM</title>
-    <link rel="stylesheet" href="css/style.css" />
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Board Settings | PM SYSTEM</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-
 <body>
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <h2 class="sidebar-title">PM SYSTEM<br>PROTOTYPE1</h2>
-        <div class="sidebar-content">
-            <nav class="sidebar-nav">
-                <ul>
-                    <li><a href="dashboard.html" class="sidebar-button">🏠 Dashboard</a></li>
-                    <li><a href="board.html" class="sidebar-button">📋 Board</a></li>
-                </ul>
-            </nav>
-        </div>
-        <div class="sidebar-footer">
-            <button class="sidebar-button logout-button" id="logoutBtn">🚪 Logout</button>
-        </div>
+  <div class="sidebar">
+    <h2 class="sidebar-title">PM SYSTEM<br>PROTOTYPE1</h2>
+    <div class="sidebar-content">
+      <nav class="sidebar-nav">
+        <ul>
+          <li><a href="dashboard.html" class="sidebar-button">🏠 Dashboard</a></li>
+          <li><a href="board.html" class="sidebar-button">📋 Board</a></li>
+        </ul>
+      </nav>
     </div>
+    <div class="sidebar-footer">
+      <button class="sidebar-button logout-button">🚪 Logout</button>
+    </div>
+  </div>
 
-    <!-- Main Content -->
-    <main class="settings-page">
-        <h1>Board Settings</h1>
+  <main class="settings-view">
+    <h1>Board Settings</h1>
 
-        <section class="board-info">
-            <h2>📝 General Information</h2>
-            <form id="boardForm">
-                <label for="boardName">Board Name:</label>
-                <input type="text" id="boardName" required />
+    <section class="settings-container">
+      <form id="boardForm">
+        <label for="boardName">Board Name:</label>
+        <input type="text" id="boardName" required />
 
-                <label for="boardDescription">Description:</label>
-                <textarea id="boardDescription" rows="3"></textarea>
+        <label for="boardDescription">Description:</label>
+        <textarea id="boardDescription" rows="3"></textarea>
 
-                <label for="boardColor">Theme Color:</label>
-                <input type="color" id="boardColor" />
+        <label for="boardColor">Theme Color:</label>
+        <input type="color" id="boardColor" />
 
-                <div id="iconPreviewWrapper" style="margin-top: 1rem;">
-                    <label>Current Board Icon:</label>
-                    <br />
-                    <img id="iconPreview" src="" style="max-width: 100px; display: none;" />
-                </div>
+        <div id="iconPreviewWrapper" style="margin-top: 1rem;">
+          <label>Current Board Icon:</label>
+          <br />
+          <img id="iconPreview" src="" style="max-width: 100px; display: none;" />
+        </div>
 
-                <div class="form-actions">
-                    <button type="submit">💾 Save Changes</button>
-                </div>
-            </form>
+        <div class="form-actions">
+          <button type="submit">💾 Save Changes</button>
+        </div>
+      </form>
+    </section>
 
-        </section>
+    <section class="settings-container" style="margin-top: 3rem;">
+      <h2>👥 Members</h2>
+      <div id="membersList">
+        <!-- Populated by JS -->
+      </div>
+    </section>
+  </main>
 
-        <section class="board-members">
-            <h2>👥 Members</h2>
-            <div id="membersList">
-                <!-- Populated by JS -->
-            </div>
-        </section>
-    </main>
-
-    <!-- Scripts -->
-    <script>
-        const supabase = window.supabase.createClient(
-            'https://qqlsttamprrcljljcqrk.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxbHN0dGFtcHJyY2xqbGpjcXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTQ2NTcsImV4cCI6MjA2NDQzMDY1N30.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g'
-        );
-    </script>
-    <script src="js/board_settings.js"></script>
+  <script>
+    const supabase = window.supabase.createClient(
+      'https://qqlsttamprrcljljcqrk.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxbHN0dGFtcHJyY2xqbGpjcXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTQ2NTcsImV4cCI6MjA2NDQzMDY1N30.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g'
+    );
+  </script>
+  <script src="js/board_settings.js"></script>
 </body>
-
 </html>

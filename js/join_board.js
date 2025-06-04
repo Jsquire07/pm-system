@@ -5,25 +5,31 @@ if (!user) {
   return;
 }
 
-
 document.addEventListener("DOMContentLoaded", () => {
+  const user = JSON.parse(localStorage.getItem("loggedInUser"));
+  if (!user) {
+    alert("Not logged in.");
+    window.location.href = "index.html";
+    return;
+  }
+
   const form = document.getElementById("joinBoardForm");
   const message = document.getElementById("joinMessage");
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const code = document.getElementById("joinCode").value.trim();
-    const user = JSON.parse(localStorage.getItem("currentUser"));
 
     if (!user || !user.email) {
       alert("You must be logged in to join a board.");
       return;
     }
 
+    // Find board by code
     const { data: board, error } = await supabase
       .from("boards")
       .select("*")
-      .eq("join_code", code)
+      .eq("code", code)
       .single();
 
     if (error || !board) {
@@ -32,10 +38,11 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // Check if user is already a member
     const { data: existing, error: existErr } = await supabase
-      .from("user_board")
+      .from("board_members")
       .select("*")
-      .eq("user_id", user.email)
+      .eq("user_id", user.id)
       .eq("board_id", board.id)
       .single();
 
@@ -45,8 +52,9 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    const { error: insertErr } = await supabase.from("user_board").insert([
-      { user_id: user.email, board_id: board.id }
+    // Add user to board
+    const { error: insertErr } = await supabase.from("board_members").insert([
+      { user_id: user.id, board_id: board.id }
     ]);
 
     if (insertErr) {

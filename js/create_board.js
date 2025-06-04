@@ -5,11 +5,11 @@ if (!user) {
   return;
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
   const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
   if (!loggedInUser) {
     window.location.href = "login.html";
-    return;
+    return; // ✅ legal here, inside a function
   }
 
   const form = document.getElementById("createBoardForm");
@@ -18,7 +18,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const boardName = document.getElementById("boardName").value;
 
-    // Insert board into Supabase
     const { data, error } = await supabase
       .from("boards")
       .insert([
@@ -32,7 +31,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (error) {
       console.error("Error creating board:", error.message);
     } else {
-      // Optional: Add the creator as a member
       await supabase.from("board_members").insert([
         { board_id: data[0].id, user_id: loggedInUser.id },
       ]);

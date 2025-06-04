@@ -1,38 +1,159 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Chat</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Team Chat | PM SYSTEM PROTOTYPE1</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .chat-view {
+      margin-left: 240px;
+      padding: 2rem;
+    }
+
+    .chat-wrapper {
+      display: flex;
+      flex-direction: column;
+      height: 80vh;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+    }
+
+    .chat-header {
+      padding: 1rem 1.5rem;
+      font-size: 1.5rem;
+      font-weight: bold;
+      background: #f6f7f9;
+      border-bottom: 1px solid #ddd;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .chat-box {
+      flex: 1;
+      padding: 1rem 1.5rem;
+      overflow-y: auto;
+      background: #fafafa;
+    }
+
+    .message {
+      margin-bottom: 1rem;
+    }
+
+    .meta {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 0.3rem;
+    }
+
+    .text {
+      background: #f1f3f5;
+      padding: 0.6rem 1rem;
+      border-radius: 6px;
+      display: inline-block;
+      max-width: 80%;
+    }
+
+    .chat-form {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 1rem;
+      border-top: 1px solid #ddd;
+      background: #f6f7f9;
+      gap: 0.5rem;
+    }
+
+    .chat-form input[type="text"] {
+      flex: 1;
+      padding: 0.6rem 1rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      min-width: 200px;
+    }
+
+    .chat-form input[type="file"],
+    .chat-form button {
+      font-size: 1rem;
+      border-radius: 6px;
+    }
+
+    .chat-form button {
+      background: #0052cc;
+      color: white;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      cursor: pointer;
+    }
+
+    .chat-form button:hover {
+      background: #003f99;
+    }
+
+    .mention {
+      color: #0052cc;
+      font-weight: bold;
+    }
+
+    img.chat-image {
+      margin-top: 8px;
+      max-width: 250px;
+      border-radius: 6px;
+      display: block;
+    }
+
+    video#cameraStream {
+      margin-top: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+  </style>
 </head>
 <body>
   <div class="sidebar">
-    <div class="sidebar-title">PM System</div>
-    <div class="sidebar-nav">
-      <ul>
-        <li><a href="dashboard.html" class="sidebar-button">Dashboard</a></li>
-        <li><a href="board.html" class="sidebar-button">Board</a></li>
-        <li><a href="chat.html" class="sidebar-button active">Chat</a></li>
-      </ul>
+    <h2 class="sidebar-title">PM SYSTEM<br>PROTOTYPE1</h2>
+    <div class="sidebar-content">
+      <nav class="sidebar-nav">
+        <ul>
+          <li><a href="dashboard.html" class="sidebar-button">🏠 Dashboard</a></li>
+          <li><a href="board.html" class="sidebar-button">📋 Board</a></li>
+          <li><a href="settings.html" class="sidebar-button">⚙️ Settings</a></li>
+          <li><a href="employees.html" class="sidebar-button">👥 Employees</a></li>
+          <li><a href="chat.html" class="sidebar-button active">💬 Chat</a></li>
+        </ul>
+      </nav>
     </div>
-    <button class="sidebar-button logout-button">Logout</button>
+    <div class="sidebar-footer">
+      <button onclick="logout()" class="sidebar-button logout-button">🚪 Logout</button>
+    </div>
   </div>
 
-  <div class="dashboard">
-    <h2>Team Chat</h2>
-    <div id="typingIndicator"></div>
-    <div id="chatBox" class="chat-box"></div>
-    <form id="chatForm" class="chat-form">
-      <input type="text" id="chatInput" placeholder="Type a message..." />
-      <input type="file" id="imageInput" accept="image/*">
-      <button type="button" id="cameraButton">📷</button>
-      <button type="submit">Send</button>
-    </form>
+  <main class="chat-view">
+    <div class="chat-wrapper">
+      <div class="chat-header">💬 Team Chat</div>
+      <div class="chat-box" id="chatBox"></div>
+      <div id="typingIndicator" style="margin: 0 1.5rem 0.5rem; color: gray;"></div>
 
-    <video id="cameraStream" autoplay playsinline width="200" hidden></video>
-    <canvas id="cameraCanvas" width="200" height="150" hidden></canvas>
-  </div>
+      <form class="chat-form" id="chatForm">
+        <input type="text" id="chatInput" placeholder="Type your message..." autocomplete="off" />
+        <input type="file" id="imageInput" accept="image/*" />
+        <button type="button" id="cameraButton">📷</button>
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  </main>
 
-  <script type="module" src="chat.js"></script>
+  <video id="cameraStream" autoplay playsinline width="240" hidden></video>
+  <canvas id="cameraCanvas" width="240" height="180" hidden></canvas>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.supabase = supabase;
+  </script>
+  <script src="js/utils.js"></script>
+  <script type="module" src="js/chat.js"></script>
 </body>
 </html>

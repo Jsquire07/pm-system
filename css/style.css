@@ -1069,3 +1069,69 @@ canvas {
   height: 18px;
   fill: white;
 }
+.form-view {
+  margin-left: 240px;
+  padding: 3rem;
+  min-height: 100vh;
+  background: #f4f5f7;
+}
+
+.form-container {
+  background: #fff;
+  padding: 2rem 2.5rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  max-width: 500px;
+  margin: auto;
+}
+
+.form-container h1 {
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  color: #222;
+}
+
+.form-container label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  margin-top: 1rem;
+}
+
+.form-container input[type="text"] {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.form-container button {
+  margin-top: 1.5rem;
+  padding: 0.75rem 1.25rem;
+  background: #0747a6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.form-container button:hover {
+  background: #003f91;
+}
+
+.form-message {
+  margin-top: 1rem;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.form-message.error {
+  color: #c0392b;
+}
+
+.form-message.success {
+  color: #27ae60;
+}

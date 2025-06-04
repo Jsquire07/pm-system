@@ -56,38 +56,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         const name = document.getElementById("boardName").value.trim();
         const description = document.getElementById("boardDescription").value.trim();
         const color = document.getElementById("boardColor").value;
-        const fileInput = document.getElementById("boardIconFile");
-        let iconUrl = board.icon_url;
-
-        if (fileInput.files.length > 0) {
-            const file = fileInput.files[0];
-            const fileName = `${boardId}_${file.name}`;
-            const { data: storageData, error: uploadError } = await supabase
-                .storage
-                .from("icons")
-                .upload(fileName, file, { upsert: true });
-
-            if (uploadError) {
-                alert("Failed to upload icon.");
-                console.error(uploadError);
-                return;
-            }
-
-            const { data: publicUrlData } = supabase
-                .storage
-                .from("icons")
-                .getPublicUrl(fileName);
-
-            iconUrl = publicUrlData.publicUrl;
-        }
 
         const { error: updateError } = await supabase
             .from("boards")
             .update({
                 name,
                 description,
-                theme_color: color,
-                icon_url: iconUrl
+                theme_color: color
+                // icon_url is no longer touched
             })
             .eq("id", boardId);
 

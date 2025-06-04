@@ -1,36 +1,30 @@
 const supabase = window.supabase
-const messageBox = document.getElementById('chatBox')
-const form = document.getElementById('chatForm')
-const input = document.getElementById('chatInput')
+
+const chatBox = document.getElementById('chatBox')
+const chatForm = document.getElementById('chatForm')
+const chatInput = document.getElementById('chatInput')
 const typingIndicator = document.getElementById('typingIndicator')
+const currentUser = localStorage.getItem('currentUser') || 'Unknown'
 
-let currentUser = localStorage.getItem('currentUser') || 'Unknown'
-
-// Load messages
 async function loadMessages() {
-  try {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .order('created_at', { ascending: true })
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .order('created_at', { ascending: true })
 
-    if (error) throw error
-    messageBox.innerHTML = ''
-    data.forEach(renderMessage)
-  } catch (err) {
-    console.error('Error loading messages:', err)
-  }
+  if (error) return console.error('Error loading messages:', error)
+  renderMessages(data)
+}
+
+function renderMessages(messages) {
+  chatBox.innerHTML = ''
+  messages.forEach(renderMessage)
 }
 
 function renderMessage(message) {
-  let msgDiv = document.querySelector(`[data-id="${message.id}"]`)
-  if (!msgDiv) {
-    msgDiv = document.createElement('div')
-    msgDiv.className = 'message'
-    msgDiv.dataset.id = message.id
-    messageBox.appendChild(msgDiv)
-  }
-
+  const msgDiv = document.querySelector(`[data-id="${message.id}"]`) || document.createElement('div')
+  msgDiv.className = 'message'
+  msgDiv.dataset.id = message.id
   msgDiv.innerHTML = `
     <div class="meta">
       <strong style="color:${stringToColor(message.username)}">${message.username || 'Unknown'}</strong>
@@ -43,15 +37,16 @@ function renderMessage(message) {
     const editBtn = document.createElement('button')
     editBtn.textContent = 'Edit'
     editBtn.onclick = () => editMessage(message)
-
     const delBtn = document.createElement('button')
     delBtn.textContent = 'Delete'
     delBtn.onclick = () => deleteMessage(message.id)
-
     msgDiv.querySelector('.meta').append(editBtn, delBtn)
   }
 
-  messageBox.scrollTop = messageBox.scrollHeight
+  if (!document.querySelector(`[data-id="${message.id}"]`)) {
+    chatBox.appendChild(msgDiv)
+  }
+  chatBox.scrollTop = chatBox.scrollHeight
 }
 
 function formatMentions(text) {
@@ -66,45 +61,36 @@ function stringToColor(str) {
   return `hsl(${hash % 360}, 70%, 60%)`
 }
 
-// Submit message
-form.addEventListener('submit', async (e) => {
+chatForm.addEventListener('submit', async (e) => {
   e.preventDefault()
-  const text = input.value.trim()
+  const text = chatInput.value.trim()
   if (!text) return
-
-  await supabase.from('messages').insert({
-    username: currentUser,
-    text
-  })
-
-  input.value = ''
+  await supabase.from('messages').insert({ username: currentUser, text })
+  chatInput.value = ''
   await supabase.from('typing').delete().eq('username', currentUser)
 })
 
-// Typing logic
-input.addEventListener('input', async () => {
-  if (!input.value.trim()) {
+chatInput.addEventListener('input', async () => {
+  if (!chatInput.value.trim()) {
     await supabase.from('typing').delete().eq('username', currentUser)
   } else {
-    await supabase.from('typing').upsert({ username: currentUser }, { onConflict: ['username'] })
+    await supabase.from('typing')
+      .upsert({ username: currentUser }, { onConflict: ['username'] })
   }
 })
 
-// Edit
 async function editMessage(message) {
   const newText = prompt('Edit your message:', message.text)
   if (!newText) return
   await supabase.from('messages').update({ text: newText }).eq('id', message.id)
 }
 
-// Delete
 async function deleteMessage(id) {
   if (confirm('Delete this message?')) {
     await supabase.from('messages').delete().eq('id', id)
   }
 }
 
-// Realtime: messages
 supabase
   .from('messages')
   .on('INSERT', payload => renderMessage(payload.new))
@@ -115,7 +101,6 @@ supabase
   })
   .subscribe()
 
-// Realtime: typing
 supabase
   .from('typing')
   .on('*', payload => {
@@ -129,5 +114,4 @@ supabase
   })
   .subscribe()
 
-// Load on page load
 loadMessages()

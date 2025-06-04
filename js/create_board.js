@@ -1,15 +1,9 @@
-const user = JSON.parse(localStorage.getItem("loggedInUser"));
-if (!user) {
-  alert("Not logged in.");
-  window.location.href = "index.html";
-  return;
-}
-
 document.addEventListener("DOMContentLoaded", () => {
-  const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
-  if (!loggedInUser) {
-    window.location.href = "login.html";
-    return; // ✅ legal here, inside a function
+  const user = JSON.parse(localStorage.getItem("loggedInUser"));
+  if (!user) {
+    alert("Not logged in.");
+    window.location.href = "index.html";
+    return;
   }
 
   const form = document.getElementById("createBoardForm");
@@ -23,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .insert([
         {
           name: boardName,
-          owner_id: loggedInUser.id,
+          owner_id: user.id,
           code: Math.floor(100000 + Math.random() * 900000).toString(),
         },
       ]);
@@ -32,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Error creating board:", error.message);
     } else {
       await supabase.from("board_members").insert([
-        { board_id: data[0].id, user_id: loggedInUser.id },
+        { board_id: data[0].id, user_id: user.id },
       ]);
 
       window.location.href = "dashboard.html";

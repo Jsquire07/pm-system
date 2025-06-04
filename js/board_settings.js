@@ -6,14 +6,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
     }
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const boardId = urlParams.get("id");
-
+    let boardId = new URLSearchParams(window.location.search).get("id");
+    if (!boardId) {
+        boardId = localStorage.getItem("currentBoardId"); // ✅ fallback
+    }
     if (!boardId) {
         alert("No board selected.");
         window.location.href = "dashboard.html";
         return;
     }
+
 
     // Fetch board data
     const { data: board, error: boardError } = await supabase

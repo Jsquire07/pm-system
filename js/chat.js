@@ -1,117 +1,73 @@
-const supabase = window.supabase
+const { createClient } = supabase;
+const supabaseClient = createClient(
+  'https://qqlsttamprrcljljcqrk.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxbHN0dGFtcHJyY2xqbGpjcXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTQ2NTcsImV4cCI6MjA2NDQzMDY1N30.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g'
+);
 
-const chatBox = document.getElementById('chatBox')
-const chatForm = document.getElementById('chatForm')
-const chatInput = document.getElementById('chatInput')
-const typingIndicator = document.getElementById('typingIndicator')
-const currentUser = localStorage.getItem('currentUser') || 'Unknown'
+const chatBox = document.getElementById("chatBox");
+const chatForm = document.getElementById("chatForm");
+const chatInput = document.getElementById("chatInput");
+
+const user = JSON.parse(localStorage.getItem("loggedInUser")) || {};
+const username = user.name || user.username || "Unknown";
 
 async function loadMessages() {
-  const { data, error } = await supabase
-    .from('messages')
-    .select('*')
-    .order('created_at', { ascending: true })
+  const { data, error } = await supabaseClient
+    .from("messages")
+    .select("*")
+    .order("created_at", { ascending: true });
 
-  if (error) return console.error('Error loading messages:', error)
-  renderMessages(data)
-}
-
-function renderMessages(messages) {
-  chatBox.innerHTML = ''
-  messages.forEach(renderMessage)
-}
-
-function renderMessage(message) {
-  const msgDiv = document.querySelector(`[data-id="${message.id}"]`) || document.createElement('div')
-  msgDiv.className = 'message'
-  msgDiv.dataset.id = message.id
-  msgDiv.innerHTML = `
-    <div class="meta">
-      <strong style="color:${stringToColor(message.username)}">${message.username || 'Unknown'}</strong>
-      <span class="timestamp">${new Date(message.created_at).toLocaleTimeString()}</span>
-    </div>
-    <div class="text">${formatMentions(message.text)}</div>
-  `
-
-  if (message.username === currentUser) {
-    const editBtn = document.createElement('button')
-    editBtn.textContent = 'Edit'
-    editBtn.onclick = () => editMessage(message)
-    const delBtn = document.createElement('button')
-    delBtn.textContent = 'Delete'
-    delBtn.onclick = () => deleteMessage(message.id)
-    msgDiv.querySelector('.meta').append(editBtn, delBtn)
+  if (error) {
+    console.error("Failed to load messages:", error);
+    return;
   }
 
-  if (!document.querySelector(`[data-id="${message.id}"]`)) {
-    chatBox.appendChild(msgDiv)
+  chatBox.innerHTML = "";
+  data.forEach(msg => appendMessage(msg));
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function appendMessage({ username, text, created_at }) {
+  const div = document.createElement("div");
+  div.className = "message";
+  const timestamp = new Date(created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  div.innerHTML = `
+    <div class="meta"><strong>${username || "Unknown"}</strong> ${timestamp}</div>
+    <div class="text">${text}</div>
+  `;
+  chatBox.appendChild(div);
+}
+
+chatForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const message = chatInput.value.trim();
+  if (!message) return;
+
+  const { error } = await supabaseClient.from("messages").insert([
+    { username: username, text: message }
+  ]);
+
+  if (error) {
+    alert("Failed to send message.");
+    console.error(error);
+    return;
   }
-  chatBox.scrollTop = chatBox.scrollHeight
-}
 
-function formatMentions(text) {
-  return text.replace(/@\w+/g, match => `<span class="mention">${match}</span>`)
-}
+  chatInput.value = "";
+  await loadMessages(); // fallback reload
+});
 
-function stringToColor(str) {
-  let hash = 0
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  return `hsl(${hash % 360}, 70%, 60%)`
-}
-
-chatForm.addEventListener('submit', async (e) => {
-  e.preventDefault()
-  const text = chatInput.value.trim()
-  if (!text) return
-  await supabase.from('messages').insert({ username: currentUser, text })
-  chatInput.value = ''
-  await supabase.from('typing').delete().eq('username', currentUser)
-})
-
-chatInput.addEventListener('input', async () => {
-  if (!chatInput.value.trim()) {
-    await supabase.from('typing').delete().eq('username', currentUser)
-  } else {
-    await supabase.from('typing')
-      .upsert({ username: currentUser }, { onConflict: ['username'] })
-  }
-})
-
-async function editMessage(message) {
-  const newText = prompt('Edit your message:', message.text)
-  if (!newText) return
-  await supabase.from('messages').update({ text: newText }).eq('id', message.id)
-}
-
-async function deleteMessage(id) {
-  if (confirm('Delete this message?')) {
-    await supabase.from('messages').delete().eq('id', id)
-  }
-}
-
-supabase
-  .from('messages')
-  .on('INSERT', payload => renderMessage(payload.new))
-  .on('UPDATE', payload => renderMessage(payload.new))
-  .on('DELETE', payload => {
-    const el = document.querySelector(`[data-id="${payload.old.id}"]`)
-    if (el) el.remove()
-  })
-  .subscribe()
-
-supabase
-  .from('typing')
-  .on('*', payload => {
-    if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-      if (payload.new.username !== currentUser) {
-        typingIndicator.textContent = `${payload.new.username} is typing...`
-      }
-    } else if (payload.eventType === 'DELETE') {
-      typingIndicator.textContent = ''
+supabaseClient
+  .channel('realtime:messages')
+  .on(
+    'postgres_changes',
+    { event: 'INSERT', schema: 'public', table: 'messages' },
+    (payload) => {
+      appendMessage(payload.new);
+      chatBox.scrollTop = chatBox.scrollHeight;
     }
-  })
-  .subscribe()
+  )
+  .subscribe();
 
-loadMessages()
+document.addEventListener("DOMContentLoaded", loadMessages);

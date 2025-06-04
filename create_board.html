@@ -3,20 +3,36 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Create Board | PM SYSTEM PROTOTYPE1</title>
-  <link rel="stylesheet" href="css/style.css"/>
+  <title>Create Board | PM SYSTEM</title>
+  <link rel="stylesheet" href="css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <div class="dashboard">
-    <h1>Create a New Board</h1>
-    <form id="createBoardForm">
-      <label for="boardName">Board Name:</label>
-      <input type="text" id="boardName" required />
-      <button type="submit">Create Board</button>
-    </form>
-    <p id="successMessage" style="color: green; margin-top: 1rem;"></p>
+  <div class="sidebar">
+    <h2 class="sidebar-title">PM SYSTEM<br>PROTOTYPE1</h2>
+    <div class="sidebar-content">
+      <nav class="sidebar-nav">
+        <ul>
+          <li><a href="dashboard.html" class="sidebar-button">🏠 Dashboard</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="sidebar-footer">
+      <button class="sidebar-button logout-button">🚪 Logout</button>
+    </div>
   </div>
+
+  <main class="form-view">
+    <div class="form-container">
+      <h1>Create a New Board</h1>
+      <form id="createBoardForm">
+        <label for="boardName">Board Name:</label>
+        <input type="text" id="boardName" required />
+        <button type="submit">➕ Create Board</button>
+      </form>
+      <div id="createMessage" class="form-message"></div>
+    </div>
+  </main>
 
   <script>
     const supabase = window.supabase.createClient(

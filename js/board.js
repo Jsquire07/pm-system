@@ -1,3 +1,11 @@
+const urlParams = new URLSearchParams(window.location.search);
+const boardId = urlParams.get("id");
+
+if (!boardId) {
+  alert("No board selected. Returning to dashboard.");
+  window.location.href = "dashboard.html";
+}
+
 let currentFilters = {
   title: "",
   assignee: "",
@@ -7,13 +15,12 @@ let currentFilters = {
 };
 
 async function getTasks() {
-  const { data, error } = await supabase.from("tasks").select("*");
+  const { data, error } = await supabase.from("tasks").select("*").eq("board_id", boardId);
   return data || [];
 }
 
-
 async function getColumns() {
-  const { data, error } = await supabase.from('columns').select('*').order('order');
+  const { data, error } = await supabase.from("columns").select("*").eq("board_id", boardId).order("order");
   return data || [];
 }
 
@@ -48,31 +55,25 @@ document.getElementById("columnForm").addEventListener("submit", async (e) => {
   if (editingColumnId) {
     const col = columns.find(c => c.id === editingColumnId);
     if (col) {
-      const { error } = await supabase
+      await supabase
         .from("columns")
         .update({ name })
         .eq("id", editingColumnId);
-      if (error) console.error("Column update error:", error);
     }
   } else {
     const newColumn = {
-      id: Date.now(), // or crypto.randomUUID() if your `id` is UUID type
+      id: Date.now(),
       name,
       order: columns.length,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      board_id: boardId
     };
-
-    const { error } = await supabase.from("columns").insert([newColumn]);
-    if (error) {
-      console.error("Column insert error:", error);
-      return;
-    }
+    await supabase.from("columns").insert([newColumn]);
   }
 
   closeColumnModal();
   loadBoard();
 });
-
 
 async function editColumn(id) {
   const columns = await getColumns();
@@ -89,7 +90,10 @@ async function deleteColumn(id) {
   if (!confirm("Delete this column?")) return;
 
   await supabase.from("columns").delete().eq("id", id);
-  await supabase.from("tasks").delete().eq("status", id); // Clean up related tasks
+  await supabase.from("tasks")
+  .delete()
+  .eq("status", id)
+  .eq("board_id", boardId);
   loadBoard();
 }
 
@@ -222,7 +226,7 @@ document.getElementById("newTaskForm").addEventListener("submit", async (e) => {
   const dueDate = document.getElementById("newTaskDueDate").value || null;
   const dueTime = document.getElementById("newTaskDueTime").value || null;
   const category = document.getElementById("newTaskCategory").value || null;
-  const status = (await getColumns())[0]?.id || "todo"; // fallback to first column
+  const status = (await getColumns())[0]?.id || "todo";
 
   const task = {
     title,
@@ -232,7 +236,8 @@ document.getElementById("newTaskForm").addEventListener("submit", async (e) => {
     dueDate,
     dueTime,
     category,
-    status
+    status,
+    board_id: boardId
   };
 
   const { error } = await supabase.from("tasks").insert([task]);
@@ -241,7 +246,6 @@ document.getElementById("newTaskForm").addEventListener("submit", async (e) => {
   closeTaskModal();
   loadBoard();
 });
-
 
 function getColorForCategory(category) {
   switch (category) {

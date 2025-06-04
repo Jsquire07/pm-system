@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard | PM SYSTEM PROTOTYPE1</title>
+  <title>Board Settings | PM SYSTEM</title>
   <link rel="stylesheet" href="css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -15,11 +15,8 @@
     <div class="sidebar-content">
       <nav class="sidebar-nav">
         <ul>
-          <li><a class="sidebar-button active">🏠 Dashboard</a></li>
+          <li><a href="dashboard.html" class="sidebar-button">🏠 Dashboard</a></li>
           <li><a href="board.html" class="sidebar-button">📋 Board</a></li>
-          <li><a href="settings.html" class="sidebar-button">⚙️ Settings</a></li>
-          <li><a href="employees.html" class="sidebar-button">👥 Employees</a></li>
-          <li><a href="chat.html" class="sidebar-button">💬 Chat</a></li>
         </ul>
       </nav>
     </div>
@@ -28,20 +25,35 @@
     </div>
   </div>
 
-  <!-- Main Content -->
-  <main class="dashboard">
-    <header class="dashboard-header">
-      <h1 id="welcomeMessage">Welcome!</h1>
-      <div class="board-controls">
-        <a href="create_board.html" class="button">➕ Create Board</a>
-        <a href="join_board.html" class="button">🔗 Join Board</a>
-      </div>
-    </header>
+  <!-- Main Settings Area -->
+  <main class="settings-page">
+    <h1>Board Settings</h1>
 
-    <section class="boards-section">
-      <h2>Your Boards</h2>
-      <div id="boardsList" class="boards-grid">
-        <!-- Populated by dashboard.js -->
+    <section class="board-info">
+      <h2>📝 General Information</h2>
+      <form id="boardForm">
+        <label>Board Name:</label>
+        <input type="text" id="boardName" required />
+        
+        <label>Description:</label>
+        <textarea id="boardDescription"></textarea>
+
+        <label>Theme Color:</label>
+        <input type="color" id="boardColor" />
+
+        <label>Board Icon URL:</label>
+        <input type="text" id="boardIcon" placeholder="https://example.com/icon.png" />
+
+        <div class="form-actions">
+          <button type="submit">💾 Save Changes</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="board-members">
+      <h2>👥 Members</h2>
+      <div id="membersList">
+        <!-- Populated by board_settings.js -->
       </div>
     </section>
   </main>
@@ -53,6 +65,6 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxbHN0dGFtcHJyY2xqbGpjcXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTQ2NTcsImV4cCI6MjA2NDQzMDY1N30.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g'
     );
   </script>
-  <script src="js/dashboard.js"></script>
+  <script src="js/board_settings.js"></script>
 </body>
 </html>

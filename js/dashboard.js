@@ -43,14 +43,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Step 3: Render the board cards
   boards.forEach(board => {
+    const isOwner = board.owner_id === user.id;
+
     const card = document.createElement("div");
     card.className = "card";
     card.innerHTML = `
-      <h2>${board.name}</h2>
-      <p>Owner ID: ${board.owner_id}</p>
-      <p>Join Code: <code>${board.code}</code></p>
-      <a href="board.html?id=${board.id}" class="button">Open Board</a>
-    `;
+    <h2>${board.name}</h2>
+    <p>Owner ID: ${board.owner_id}</p>
+    <p>Join Code: <code>${board.code}</code></p>
+    <a href="board.html?id=${board.id}" class="button">Open Board</a>
+    ${isOwner ? `<a href="board_settings.html?id=${board.id}" class="settings-icon" title="Settings">⚙️</a>` : ""}
+  `;
     boardList.appendChild(card);
   });
+
 });

@@ -1007,3 +1007,65 @@ canvas {
   font-size: 0.75rem;
   margin-left: 1rem;
 }
+
+/* === Dashboard Tile Enhancements === */
+
+.card h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.card .board-description {
+  font-size: 0.95rem;
+  color: #555;
+  margin-bottom: 0.75rem;
+}
+
+.card .button {
+  display: inline-block;
+  background-color: #0052cc;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  margin-right: 0.5rem;
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+
+.card .button:hover {
+  background-color: #003f91;
+}
+
+.card .button.settings {
+  background-color: #6c757d;
+}
+
+.card .button.settings:hover {
+  background-color: #5a6268;
+}
+
+/* Dashboard header buttons */
+.board-controls a.button {
+  font-size: 1rem;
+  background-color: #5e17eb;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-right: 0.5rem;
+}
+
+.board-controls a.button:hover {
+  background-color: #4b12c4;
+}
+
+.board-controls a.button svg {
+  width: 18px;
+  height: 18px;
+  fill: white;
+}

@@ -6,26 +6,42 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  document.getElementById("welcomeMessage").innerText = `Welcome, ${user.name}!`;
-
-  const { data: boards, error } = await supabase
-    .from("boards")
-    .select("*")
-    .eq("owner_id", user.id); // Adjust this based on your schema
-
+  const welcome = document.getElementById("welcomeMessage");
   const boardList = document.getElementById("boardsList");
+  welcome.textContent = `Welcome, ${user.name}!`;
 
-  if (error) {
-    boardList.innerHTML = "<p>Error loading boards.</p>";
-    console.error(error);
+  // Step 1: Get all board memberships for the logged-in user
+  const { data: memberships, error: membershipError } = await supabase
+    .from("board_members")
+    .select("board_id")
+    .eq("user_id", user.id);
+
+  if (membershipError) {
+    console.error("Error loading memberships:", membershipError.message);
+    boardList.innerHTML = "<p>Error loading your boards.</p>";
     return;
   }
 
-  if (!boards || boards.length === 0) {
+  const boardIds = memberships.map(m => m.board_id);
+
+  if (boardIds.length === 0) {
     boardList.innerHTML = "<p>No boards yet. Create or join one!</p>";
     return;
   }
 
+  // Step 2: Fetch all boards the user is a member of
+  const { data: boards, error: boardError } = await supabase
+    .from("boards")
+    .select("*")
+    .in("id", boardIds);
+
+  if (boardError) {
+    console.error("Error loading boards:", boardError.message);
+    boardList.innerHTML = "<p>Error loading your boards.</p>";
+    return;
+  }
+
+  // Step 3: Render the board cards
   boards.forEach(board => {
     const card = document.createElement("div");
     card.className = "card";

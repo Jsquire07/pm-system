@@ -1,3 +1,11 @@
+const user = JSON.parse(localStorage.getItem("loggedInUser"));
+if (!user) {
+  alert("Not logged in.");
+  window.location.href = "index.html";
+  return;
+}
+
+
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("joinBoardForm");
   const message = document.getElementById("joinMessage");

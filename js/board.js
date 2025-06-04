@@ -1,3 +1,11 @@
+const user = JSON.parse(localStorage.getItem("loggedInUser"));
+if (!user) {
+  alert("Not logged in.");
+  window.location.href = "index.html";
+  return;
+}
+
+
 const urlParams = new URLSearchParams(window.location.search);
 const boardId = urlParams.get("id");
 

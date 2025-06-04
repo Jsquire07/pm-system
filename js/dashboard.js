@@ -1,3 +1,10 @@
+const user = JSON.parse(localStorage.getItem("loggedInUser"));
+if (!user) {
+  alert("Not logged in.");
+  window.location.href = "index.html";
+  return;
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   const user = JSON.parse(localStorage.getItem("currentUser"));
   if (!user) {

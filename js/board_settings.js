@@ -29,11 +29,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // Restrict access to board owner
-  if (board.owner_id !== user.id) {
-    alert("Access denied. Only the board owner can manage settings.");
-    window.location.href = "dashboard.html";
-    return;
-  }
+  if (String(board.owner_id) !== String(user.id)) {
+  alert("Access denied. Only the board owner can manage settings.");
+  window.location.href = "dashboard.html";
+  return;
+}
+
 
   // Populate board fields
   document.getElementById("boardName").value = board.name || "";

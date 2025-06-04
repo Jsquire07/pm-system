@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -17,7 +16,7 @@
       <nav class="sidebar-nav">
         <ul>
           <li><a href="dashboard.html" class="sidebar-button">🏠 Dashboard</a></li>
-          <li><a href="board.html" class="sidebar-button">📋 Board</a></li>
+          <li><a class="sidebar-button active">📋 Board</a></li>
           <li><a href="settings.html" class="sidebar-button">⚙️ Settings</a></li>
           <li><a href="employees.html" class="sidebar-button">👥 Employees</a></li>
           <li><a href="chat.html" class="sidebar-button">💬 Chat</a></li>
@@ -25,7 +24,7 @@
       </nav>
     </div>
     <div class="sidebar-footer">
-      <button class="sidebar-button logout-button" onclick="logout()">🚪 Logout</button>
+      <button class="sidebar-button logout-button" id="logoutBtn">🚪 Logout</button>
     </div>
   </div>
 
@@ -55,11 +54,11 @@
           <option value="Audio">Audio</option>
           <option value="Community">Community</option>
         </select>
-        <button onclick="resetFilters()">Clear Filters</button>
+        <button id="clearFiltersBtn">Clear Filters</button>
       </section>
       <h1 id="boardTitle">Project Board</h1>
-      <button onclick="openTaskModal()">+ New Task</button>
-      <button onclick="openNewColumnModal()">+ New Column</button>
+      <button id="newTaskBtn">+ New Task</button>
+      <button id="newColumnBtn">+ New Column</button>
     </header>
 
     <div class="columns-container">
@@ -101,7 +100,7 @@
         </select>
         <div class="modal-actions">
           <button type="submit">Create Task</button>
-          <button type="button" onclick="closeTaskModal()">Cancel</button>
+          <button type="button" id="cancelTaskBtn">Cancel</button>
         </div>
       </form>
     </div>
@@ -116,7 +115,7 @@
         <input type="text" id="columnNameInput" required/>
         <div class="modal-actions">
           <button type="submit">Save</button>
-          <button type="button" onclick="closeColumnModal()">Cancel</button>
+          <button type="button" id="cancelColumnBtn">Cancel</button>
         </div>
       </form>
     </div>
@@ -131,5 +130,16 @@
     );
   </script>
   <script src="js/board.js"></script>
+  <script>
+    // Clean inline onclick -> JS bindings
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("newColumnBtn").addEventListener("click", () => window.openNewColumnModal());
+      document.getElementById("newTaskBtn").addEventListener("click", () => window.openTaskModal());
+      document.getElementById("cancelTaskBtn").addEventListener("click", () => window.closeTaskModal());
+      document.getElementById("cancelColumnBtn").addEventListener("click", () => window.closeColumnModal());
+      document.getElementById("clearFiltersBtn").addEventListener("click", () => window.resetFilters());
+      document.getElementById("logoutBtn").addEventListener("click", () => logout());
+    });
+  </script>
 </body>
 </html>

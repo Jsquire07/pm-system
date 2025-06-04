@@ -1,12 +1,5 @@
-const user = JSON.parse(localStorage.getItem("loggedInUser"));
-if (!user) {
-  alert("Not logged in.");
-  window.location.href = "index.html";
-  return;
-}
-
 document.addEventListener("DOMContentLoaded", async () => {
-  const user = JSON.parse(localStorage.getItem("currentUser"));
+  const user = JSON.parse(localStorage.getItem("loggedInUser"));
   if (!user) {
     alert("Not logged in.");
     window.location.href = "index.html";
@@ -18,7 +11,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const { data: boards, error } = await supabase
     .from("boards")
     .select("*")
-    .contains("members", [user.id]);
+    .eq("owner_id", user.id); // Adjust this based on your schema
 
   const boardList = document.getElementById("boardsList");
 
@@ -38,7 +31,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     card.className = "card";
     card.innerHTML = `
       <h2>${board.name}</h2>
-      <p>Owner ID: ${board.owner}</p>
+      <p>Owner ID: ${board.owner_id}</p>
       <p>Join Code: <code>${board.code}</code></p>
       <a href="board.html?id=${board.id}" class="button">Open Board</a>
     `;

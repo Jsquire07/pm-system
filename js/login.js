@@ -24,11 +24,11 @@ function toggleMode() {
   toggleLink.textContent = creatingAccount ? "Back to Login" : "Create an account";
   errorMsg.textContent = "";
 
-  registerFields.style.opacity = 0;
+  // Add fade effect
+  registerFields.classList.add("fade");
   setTimeout(() => {
-    registerFields.style.transition = "opacity 0.4s ease";
-    registerFields.style.opacity = creatingAccount ? 1 : 0;
-  }, 100);
+    registerFields.classList.toggle("active", creatingAccount);
+  }, 50);
 }
 
 toggleLink.addEventListener("click", toggleMode);

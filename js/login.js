@@ -65,7 +65,11 @@ form.addEventListener("submit", async (e) => {
     return;
   }
 
-  const { data: user, error } = await supabase.from("users").select("*").eq("email", email).single();
+  const { data: user, error } = await supabase
+    .from("users")
+    .select("id, email, name, password")  // only fetch what's needed
+    .eq("email", email)
+    .single();
 
   if (error || !user) {
     errorMsg.textContent = "Invalid credentials.";

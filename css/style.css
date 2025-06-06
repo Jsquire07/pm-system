@@ -1291,6 +1291,7 @@ body {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
+  margin-top: 1rem;
 }
 
 .board-controls a.button {
@@ -1300,6 +1301,8 @@ body {
   border-radius: 6px;
   text-decoration: none;
   font-size: 1rem;
+  display: inline-block;
+  margin-bottom: 0.5rem;
 }
 
 .boards-grid {
@@ -1358,21 +1361,37 @@ body {
     position: static;
     width: 100%;
     height: auto;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-    padding: 1rem;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 1rem 0;
+  }
+
+  .sidebar-title {
+    text-align: center;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+  }
+
+  .sidebar-nav ul {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .sidebar-nav li {
+    width: 100%;
+  }
+
+  .sidebar-button {
+    width: 90%;
+    margin: 0.3rem 0;
   }
 
   .dashboard {
     margin-left: 0;
     padding: 1rem;
-  }
-
-  .sidebar-button {
-    flex: 1 1 100%;
-    text-align: center;
-    margin: 0.5rem 0;
   }
 
   .dashboard-header h1 {

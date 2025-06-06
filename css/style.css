@@ -1205,3 +1205,89 @@ canvas {
 .card .settings:hover {
   background: #495057;
 }
+/* === Mobile Responsiveness === */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 1rem;
+    z-index: 1000;
+  }
+
+  .sidebar-title {
+    flex: 1 1 100%;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+
+  .sidebar-nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+
+  .sidebar-nav li {
+    margin: 0.5rem;
+    flex: 1 1 auto;
+  }
+
+  .sidebar-button {
+    font-size: 14px;
+    padding: 0.4rem 0.6rem;
+    text-align: center;
+  }
+
+  .sidebar-footer {
+    display: none;
+  }
+
+  .dashboard,
+  .settings-view,
+  .employees-view,
+  .chat-wrapper,
+  .form-view,
+  .settings-page {
+    margin-left: 0;
+    padding: 1rem;
+  }
+
+  .boards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .board-controls a.button {
+    display: block;
+    margin: 0.5rem 0;
+    width: 100%;
+    text-align: center;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .form-container {
+    width: 90%;
+    padding: 1.5rem;
+  }
+
+  .chat-box {
+    height: 300px;
+  }
+
+  .chat-form {
+    flex-direction: column;
+  }
+
+  .chat-form button {
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+}

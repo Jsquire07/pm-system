@@ -67,14 +67,15 @@ form.addEventListener("submit", async (e) => {
 
   const { data: user, error } = await supabase
     .from("users")
-    .select("id, email, name, password")  // only fetch what's needed
+    .select("id,email,name,password")
     .eq("email", email)
-    .single();
+    .maybeSingle();
 
   if (error || !user) {
-    errorMsg.textContent = "Invalid credentials.";
+    document.getElementById("login-error").textContent = "Invalid credentials.";
     return;
   }
+
 
   const passwordMatch = await dcodeIO.bcrypt.compare(inputPassword, user.password);
   if (!passwordMatch) {

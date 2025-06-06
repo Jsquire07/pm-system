@@ -1205,7 +1205,7 @@ canvas {
 .card .settings:hover {
   background: #495057;
 }
-/* Updated CSS for responsive layout with cleaned spacing */
+/* Updated CSS for responsive layout with mobile fix and board styling fix */
 
 /* General */
 body {
@@ -1228,6 +1228,7 @@ body {
   justify-content: space-between;
   padding: 1.5rem 1rem;
   box-sizing: border-box;
+  z-index: 100;
 }
 
 .sidebar-title {
@@ -1291,7 +1292,6 @@ body {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
-  margin-top: 1rem;
 }
 
 .board-controls a.button {
@@ -1301,8 +1301,6 @@ body {
   border-radius: 6px;
   text-decoration: none;
   font-size: 1rem;
-  display: inline-block;
-  margin-bottom: 0.5rem;
 }
 
 .boards-grid {
@@ -1355,56 +1353,67 @@ body {
   background: #5a6268;
 }
 
+/* Board page columns container spacing */
+.columns-container {
+  overflow-x: auto;
+  padding: 1rem;
+  margin-top: 2rem;
+}
+
 /* Mobile responsive */
 @media (max-width: 768px) {
   .sidebar {
-    position: static;
+    position: relative;
     width: 100%;
     height: auto;
     flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    padding: 1rem 0;
-  }
-
-  .sidebar-title {
-    text-align: center;
-    font-size: 1.2rem;
-    margin-bottom: 1rem;
-  }
-
-  .sidebar-nav ul {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
+    padding: 1rem;
     align-items: center;
   }
 
-  .sidebar-nav li {
-    width: 100%;
-  }
-
-  .sidebar-button {
-    width: 90%;
-    margin: 0.3rem 0;
-  }
-
-  .dashboard {
+  .dashboard,
+  .board,
+  .settings-page,
+  .employees-view,
+  .form-view {
     margin-left: 0;
     padding: 1rem;
   }
 
+  .sidebar-button {
+    width: 90%;
+    margin: 0.4rem auto;
+  }
+
   .dashboard-header h1 {
     font-size: 1.8rem;
+    text-align: center;
   }
 
   .board-controls {
     flex-direction: column;
+    width: 100%;
+    align-items: center;
+  }
+
+  .board-controls a.button {
+    width: 90%;
+    text-align: center;
+  }
+
+  .filter-panel {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .columns {
+    flex-direction: column;
     align-items: stretch;
   }
 
-  .form-view {
-    margin-left: 0;
-    padding: 1.5rem;
+  .card {
+    width: 100%;
+    box-sizing: border-box;
   }
 }

@@ -16,7 +16,6 @@ const loginBtn = document.getElementById("loginBtn");
 
 let creatingAccount = false;
 
-// Toggle animated form mode
 function toggleMode() {
   creatingAccount = !creatingAccount;
   registerFields.style.display = creatingAccount ? "block" : "none";
@@ -25,7 +24,6 @@ function toggleMode() {
   toggleLink.textContent = creatingAccount ? "Back to Login" : "Create an account";
   errorMsg.textContent = "";
 
-  // Smooth fade animation
   registerFields.style.opacity = 0;
   setTimeout(() => {
     registerFields.style.transition = "opacity 0.4s ease";
@@ -50,34 +48,44 @@ form.addEventListener("submit", async (e) => {
     }
 
     const hashedPassword = await dcodeIO.bcrypt.hash(inputPassword, 10);
-    const { error } = await supabase.from("users").insert([
+    const { error: insertError } = await supabase.from("users").insert([
       { name, email, password: hashedPassword }
     ]);
 
-    if (error) {
+    if (insertError) {
       errorMsg.textContent = "Failed to create account. Email may already exist.";
       return;
     }
 
-    const { data: user } = await supabase.from("users").select("*").eq("email", email).single();
+    const { data, error: fetchError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("email", email);
+
+    if (fetchError || !data || data.length === 0) {
+      errorMsg.textContent = "Error retrieving account.";
+      return;
+    }
+
+    const user = data[0];
     localStorage.setItem("loggedInUser", JSON.stringify(user));
     window.location.href = "dashboard.html";
     return;
   }
 
-  const { data: user, error } = await supabase
+  const { data, error } = await supabase
     .from("users")
-    .select("id,email,name,password")
-    .eq("email", email)
-    .maybeSingle();
+    .select("id, email, name, password")
+    .eq("email", email);
 
-  if (error || !user) {
-    document.getElementById("login-error").textContent = "Invalid credentials.";
+  if (error || !data || data.length === 0) {
+    errorMsg.textContent = "Invalid credentials.";
     return;
   }
 
-
+  const user = data[0];
   const passwordMatch = await dcodeIO.bcrypt.compare(inputPassword, user.password);
+
   if (!passwordMatch) {
     errorMsg.textContent = "Invalid credentials.";
     return;

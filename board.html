@@ -10,26 +10,24 @@
 
 <body>
   <!-- Sidebar -->
-  <div class="sidebar">
-    <h2 class="sidebar-title">PM SYSTEM<br>PROTOTYPE1</h2>
-    <div class="sidebar-content">
-      <nav class="sidebar-nav">
-        <ul>
-          <li><a href="dashboard.html" class="sidebar-button">🏠 Dashboard</a></li>
-          <li><a href="employees.html" class="sidebar-button">👥 Employees</a></li>
-          <li><a href="chat.html" class="sidebar-button">💬 Chat</a></li>
-        </ul>
-      </nav>
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>PM SYSTEM</h2>
     </div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="sidebar-link">🏠 Dashboard</a>
+      <a href="employees.html" class="sidebar-link">👥 Employees</a>
+      <a href="chat.html" class="sidebar-link">💬 Chat</a>
+    </nav>
     <div class="sidebar-footer">
-      <button class="sidebar-button logout-button" onclick="logout()">🚪 Logout</button>
-
+      <button class="logout-btn" onclick="logout()">🚪 Logout</button>
     </div>
-  </div>
+  </aside>
 
   <!-- Main Board Area -->
   <main class="board">
     <header class="board-header">
+      <h1 id="boardTitle">Project Board</h1>
       <section class="filter-panel">
         <select id="filterAssignee"><option value="">All Assignees</option></select>
         <input type="date" id="filterDueDate"/>
@@ -53,11 +51,12 @@
           <option value="Audio">Audio</option>
           <option value="Community">Community</option>
         </select>
-        <button id="clearFiltersBtn">Clear Filters</button>
+        <button id="clearFiltersBtn">Clear</button>
       </section>
-      <h1 id="boardTitle">Project Board</h1>
-      <button id="newTaskBtn">+ New Task</button>
-      <button id="newColumnBtn">+ New Column</button>
+      <div class="board-controls">
+        <button id="newTaskBtn" class="button primary">+ New Task</button>
+        <button id="newColumnBtn" class="button secondary">+ New Column</button>
+      </div>
     </header>
 
     <div class="columns-container">
@@ -73,7 +72,7 @@
         <label>Title:</label>
         <input type="text" id="newTaskTitle" required/>
         <label>Description:</label>
-        <input type="text" id="newTaskDescription" required/>
+        <textarea id="newTaskDescription" rows="3" required></textarea>
         <label>Assignee:</label>
         <select id="newTaskAssignee"></select>
         <label>Priority:</label>
@@ -88,18 +87,18 @@
         <input type="time" id="newTaskDueTime"/>
         <label>Category:</label>
         <select id="newTaskCategory">
-          <option value="Scripting">Scripting</option>
-          <option value="Animation">Animation</option>
-          <option value="Testing">Testing</option>
-          <option value="UI/UX">UI/UX</option>
-          <option value="Worldbuilding">Worldbuilding</option>
-          <option value="Narrative">Narrative</option>
-          <option value="Audio">Audio</option>
-          <option value="Community">Community</option>
+          <option>Scripting</option>
+          <option>Animation</option>
+          <option>Testing</option>
+          <option>UI/UX</option>
+          <option>Worldbuilding</option>
+          <option>Narrative</option>
+          <option>Audio</option>
+          <option>Community</option>
         </select>
         <div class="modal-actions">
-          <button type="submit">Create Task</button>
-          <button type="button" id="cancelTaskBtn">Cancel</button>
+          <button type="submit" class="button primary">Create Task</button>
+          <button type="button" id="cancelTaskBtn" class="button secondary">Cancel</button>
         </div>
       </form>
     </div>
@@ -113,8 +112,8 @@
         <label>Column Name:</label>
         <input type="text" id="columnNameInput" required/>
         <div class="modal-actions">
-          <button type="submit">Save</button>
-          <button type="button" id="cancelColumnBtn">Cancel</button>
+          <button type="submit" class="button primary">Save</button>
+          <button type="button" id="cancelColumnBtn" class="button secondary">Cancel</button>
         </div>
       </form>
     </div>
@@ -122,23 +121,6 @@
 
   <!-- Scripts -->
   <script src="js/utils.js"></script>
-  <script>
-    const supabase = window.supabase.createClient(
-      'https://qqlsttamprrcljljcqrk.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxbHN0dGFtcHJyY2xqbGpjcXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTQ2NTcsImV4cCI6MjA2NDQzMDY1N30.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g'
-    );
-  </script>
   <script src="js/board.js"></script>
-  <script>
-    // Clean inline onclick -> JS bindings
-    document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("newColumnBtn").addEventListener("click", () => window.openNewColumnModal());
-      document.getElementById("newTaskBtn").addEventListener("click", () => window.openTaskModal());
-      document.getElementById("cancelTaskBtn").addEventListener("click", () => window.closeTaskModal());
-      document.getElementById("cancelColumnBtn").addEventListener("click", () => window.closeColumnModal());
-      document.getElementById("clearFiltersBtn").addEventListener("click", () => window.resetFilters());
-      document.getElementById("logoutBtn").addEventListener("click", () => logout());
-    });
-  </script>
 </body>
 </html>

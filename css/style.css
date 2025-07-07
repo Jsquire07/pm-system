@@ -1296,7 +1296,7 @@ body {
 
 .board-controls a.button {
   background: #5e17eb;
-  color: white;
+  color: rgb(0, 0, 0);
   padding: 0.6rem 1.2rem;
   border-radius: 6px;
   text-decoration: none;
@@ -1311,7 +1311,7 @@ body {
 }
 
 .card {
-  background: white;
+  background: rgb(75, 75, 75);
   padding: 1.25rem;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);

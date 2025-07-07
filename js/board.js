@@ -520,7 +520,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (boardError || !board) {
       console.error("Board fetch error:", boardError);
-      alert("Failed to load board.");
+      alert(`Board fetch error: ${boardError?.message || "Board not found"}`);
       return;
     }
     boardTitle.textContent = board.name;
@@ -530,11 +530,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       .from("columns")
       .select("*")
       .eq("board_id", boardId)
-      .order("order");
+      .order("order", { ascending: true });
 
     if (colError) {
-      console.error("Column fetch error:", colError);
-      alert("Failed to load columns.");
+      console.error("Columns fetch error:", colError);
+      alert(`Columns fetch error: ${colError.message}`);
+      return;
+    }
+
+    if (!columns || columns.length === 0) {
+      columnsContainer.innerHTML = `<p class="empty-state">No columns yet. Click "+ New Column" to create one.</p>`;
       return;
     }
 
@@ -558,12 +563,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         .order("created_at", { ascending: true });
 
       if (taskError) {
-        console.error(`Tasks fetch error for column ${column.id}:`, taskError);
+        console.error(`Tasks fetch error (column ${column.id}):`, taskError);
+        alert(`Tasks fetch error: ${taskError.message}`);
+        return;
+      }
+
+      if (!tasks || tasks.length === 0) {
+        document.getElementById(`tasks-${column.id}`).innerHTML =
+          "<p class='empty-tasks'>No tasks in this column.</p>";
         return;
       }
 
       // Render Tasks
-      const tasksDiv = document.getElementById(`tasks-${column.id}`);
       tasks.forEach(task => {
         const taskCard = document.createElement("div");
         taskCard.className = "card fade-in";
@@ -577,13 +588,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             <span class="badge">${task.category}</span>
           </div>
         `;
-        tasksDiv.appendChild(taskCard);
+        document.getElementById(`tasks-${column.id}`).appendChild(taskCard);
       });
     });
 
   } catch (err) {
     console.error("Unexpected error:", err);
-    alert("An unexpected error occurred.");
+    alert(`Unexpected error: ${err.message}`);
   }
 });
 
@@ -592,6 +603,7 @@ function logout() {
   localStorage.removeItem("loggedInUser");
   window.location.href = "login.html";
 }
+
 
 function resetFilters() {
   location.reload();

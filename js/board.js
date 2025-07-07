@@ -569,7 +569,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       const { data: tasks, error: taskError } = await supabase
         .from("tasks")
         .select("*")
-        .eq("column_id", column.id)
+        .eq("status", column.id)
+
         .order("created_at", { ascending: true });
 
       if (taskError) {

@@ -9,26 +9,22 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-  <div class="background">
-    <main class="form-view">
-      <div class="form-container glass">
-        <h1 id="formTitle">Employee Login</h1>
-        <form id="loginForm">
-          <input type="email" id="login-email" placeholder="Email" required />
-          <input type="password" id="login-password" placeholder="Password" required />
-
-          <div id="registerFields" class="fade" style="display: none;">
-            <input type="text" id="register-name" placeholder="Your Name" />
-          </div>
-
-          <button type="submit" id="loginBtn">Login</button>
-          <p id="toggleLink" class="toggle-link">Create an account</p>
-          <p id="login-error" class="form-message error"></p>
-        </form>
-      </div>
-    </main>
-  </div>
-
+  <div class="background"></div>
+  <main class="form-view">
+    <div class="form-container">
+      <h1 id="formTitle">Employee Login</h1>
+      <form id="loginForm">
+        <input type="email" id="login-email" placeholder="Email" required />
+        <input type="password" id="login-password" placeholder="Password" required />
+        <div id="registerFields" class="fade" style="display: none;">
+          <input type="text" id="register-name" placeholder="Your Name" />
+        </div>
+        <button type="submit" id="loginBtn">Login</button>
+        <p id="toggleLink" class="toggle-link">Create an account</p>
+        <p id="login-error" class="form-message error"></p>
+      </form>
+    </div>
+  </main>
   <script>
     window.supabase = supabase;
   </script>

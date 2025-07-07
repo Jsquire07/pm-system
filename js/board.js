@@ -1,14 +1,14 @@
 const urlParams = new URLSearchParams(window.location.search);
 const boardId = urlParams.get("id");
 
-// Ensure Supabase is initialized
-if (!window.supabase) {
-  window.supabase = supabase.createClient(
-    'https://qqlsttamprrcljljcqrk.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxbHN0dGFtcHJyY2xqbGpjcXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTQ2NTcsImV4cCI6MjA2NDQzMDY1N30.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g'
-  );
-}
-const supabase = window.supabase;
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+// Create Supabase client
+const supabase = createClient(
+  'https://qqlsttamprrcljljcqrk.supabase.co', // your project URL
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxbHN0dGFtcHJyY2xqbGpjcXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTQ2NTcsImV4cCI6MjA2NDQzMDY1N30.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g'
+);
+
 
 
 if (!boardId) {

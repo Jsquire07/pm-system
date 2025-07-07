@@ -1,16 +1,6 @@
 const urlParams = new URLSearchParams(window.location.search);
 const boardId = urlParams.get("id");
 
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-// Create Supabase client
-const supabase = createClient(
-  'https://qqlsttamprrcljljcqrk.supabase.co', // your project URL
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxbHN0dGFtcHJyY2xqbGpjcXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTQ2NTcsImV4cCI6MjA2NDQzMDY1N30.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g'
-);
-
-
-
 if (!boardId) {
   alert("No board selected. Returning to dashboard.");
   window.location.href = "dashboard.html";
@@ -500,121 +490,33 @@ async function moveTask(taskId, direction) {
   window.scrollTo({ top: scrollY });
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
   const user = JSON.parse(localStorage.getItem("loggedInUser"));
   if (!user) {
-    alert("Not logged in!");
-    window.location.href = "login.html";
+    alert("Not logged in.");
+    window.location.href = "index.html";
     return;
   }
+  
+  loadBoard();
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const boardId = urlParams.get("id");
-
-  if (!boardId) {
-    alert("No board ID provided!");
-    window.location.href = "dashboard.html";
-    return;
-  }
-
-  const boardTitle = document.getElementById("boardTitle");
-  const columnsContainer = document.getElementById("columns");
-
-  try {
-    // Fetch Board Details
-    const { data: board, error: boardError } = await supabase
-      .from("boards")
-      .select("*")
-      .eq("id", boardId)
-      .single();
-
-    if (boardError || !board) {
-      console.error("Board fetch error:", boardError);
-      alert(`Board fetch error: ${boardError?.message || "Board not found"}`);
-      return;
-    }
-    boardTitle.textContent = board.name;
-
-    // Fetch Columns
-    const { data: columns, error: colError } = await supabase
-      .from("columns")
-      .select("*")
-      .eq("board_id", boardId)
-      .order("order", { ascending: true });
-
-    if (colError) {
-      console.error("Columns fetch error:", colError);
-      alert(`Columns fetch error: ${colError.message}`);
-      return;
-    }
-
-    if (!columns || columns.length === 0) {
-      columnsContainer.innerHTML = `<p class="empty-state">No columns yet. Click "+ New Column" to create one.</p>`;
-      return;
-    }
-
-    // Render Columns
-    columns.forEach(async (column) => {
-      const colDiv = document.createElement("div");
-      colDiv.className = "column fade-in";
-      colDiv.dataset.columnId = column.id;
-
-      colDiv.innerHTML = `
-        <h2>${column.name}</h2>
-        <div class="tasks" id="tasks-${column.id}"></div>
-      `;
-      columnsContainer.appendChild(colDiv);
-
-      // Fetch Tasks for this Column
-      const { data: tasks, error: taskError } = await supabase
-        .from("tasks")
-        .select("*")
-        .eq("status", column.id)
-
-        .order("created_at", { ascending: true });
-
-      if (taskError) {
-        console.error(`Tasks fetch error (column ${column.id}):`, taskError);
-        alert(`Tasks fetch error: ${taskError.message}`);
-        return;
-      }
-
-      if (!tasks || tasks.length === 0) {
-        document.getElementById(`tasks-${column.id}`).innerHTML =
-          "<p class='empty-tasks'>No tasks in this column.</p>";
-        return;
-      }
-
-      // Render Tasks
-      tasks.forEach(task => {
-        const taskCard = document.createElement("div");
-        taskCard.className = "card fade-in";
-        taskCard.dataset.taskId = task.id;
-
-        taskCard.innerHTML = `
-          <h3 class="card-title">${task.title}</h3>
-          <p>${task.description || "No description"}</p>
-          <div class="card-meta">
-            <span class="badge">${task.priority}</span>
-            <span class="badge">${task.category}</span>
-          </div>
-        `;
-        document.getElementById(`tasks-${column.id}`).appendChild(taskCard);
-      });
-    });
-
-  } catch (err) {
-    console.error("Unexpected error:", err);
-    alert(`Unexpected error: ${err.message}`);
-  }
+  document.getElementById("filterAssignee").addEventListener("change", e => {
+    currentFilters.assignee = e.target.value;
+    loadBoard();
+  });
+  document.getElementById("filterPriority").addEventListener("change", e => {
+    currentFilters.priority = e.target.value;
+    loadBoard();
+  });
+  document.getElementById("filterCategory").addEventListener("change", e => {
+    currentFilters.category = e.target.value;
+    loadBoard();
+  });
+  document.getElementById("filterDueDate").addEventListener("change", e => {
+    currentFilters.dueDate = e.target.value;
+    loadBoard();
+  });
 });
-
-// Logout
-function logout() {
-  localStorage.removeItem("loggedInUser");
-  window.location.href = "login.html";
-}
-
 
 function resetFilters() {
   location.reload();

@@ -582,3 +582,94 @@ body.login {
 .search-box input::placeholder {
   color: #9ca3af;
 }
+/* === Login Page Redesign === */
+body.login {
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-family: 'Inter', sans-serif;
+  color: #f1f5f9;
+}
+
+.form-container {
+  background: rgba(30, 41, 59, 0.7);
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+  padding: 2rem 2.5rem;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+.form-container h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-bottom: 1.5rem;
+}
+
+.form-container input {
+  width: 100%;
+  padding: 0.8rem;
+  margin: 0.5rem 0;
+  border: none;
+  border-radius: 8px;
+  background: #334155;
+  color: #f1f5f9;
+  font-size: 1rem;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-container input:focus {
+  background: #475569;
+  box-shadow: 0 0 0 2px #6366f1;
+  outline: none;
+}
+
+.form-container button {
+  width: 100%;
+  padding: 0.9rem;
+  margin-top: 1rem;
+  border: none;
+  border-radius: 8px;
+  background: #6366f1;
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.form-container button:hover {
+  background: #4f46e5;
+  transform: translateY(-2px);
+}
+
+.toggle-link {
+  display: inline-block;
+  margin-top: 1rem;
+  color: #cbd5e1;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.toggle-link:hover {
+  color: #ffffff;
+}
+
+/* === Animations === */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

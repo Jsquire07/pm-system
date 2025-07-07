@@ -771,3 +771,68 @@ body.login {
   box-shadow: 0 8px 30px rgba(0,0,0,0.5);
   color: #f1f5f9;
 }
+/* === Board Columns & Tasks === */
+.columns {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.column {
+  background: #1e1f25;
+  border-radius: 12px;
+  width: 300px;
+  min-height: 400px;
+  padding: 1rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.column:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+}
+
+.column h2 {
+  color: #f8fafc;
+  font-size: 1.2rem;
+  margin-bottom: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* === Task Cards === */
+.card {
+  background: #2a2d34;
+  color: #f1f5f9;
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 0.8rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+}
+
+.card-title {
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.card-meta {
+  margin-top: 0.5rem;
+}
+
+.badge {
+  background: #334155;
+  color: #cbd5e1;
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  margin-right: 0.3rem;
+  font-size: 0.8rem;
+}

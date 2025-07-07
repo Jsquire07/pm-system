@@ -490,33 +490,108 @@ async function moveTask(taskId, direction) {
   window.scrollTo({ top: scrollY });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const user = JSON.parse(localStorage.getItem("loggedInUser"));
   if (!user) {
-    alert("Not logged in.");
-    window.location.href = "index.html";
+    alert("Not logged in!");
+    window.location.href = "login.html";
     return;
   }
-  
-  loadBoard();
 
-  document.getElementById("filterAssignee").addEventListener("change", e => {
-    currentFilters.assignee = e.target.value;
-    loadBoard();
-  });
-  document.getElementById("filterPriority").addEventListener("change", e => {
-    currentFilters.priority = e.target.value;
-    loadBoard();
-  });
-  document.getElementById("filterCategory").addEventListener("change", e => {
-    currentFilters.category = e.target.value;
-    loadBoard();
-  });
-  document.getElementById("filterDueDate").addEventListener("change", e => {
-    currentFilters.dueDate = e.target.value;
-    loadBoard();
-  });
+  const urlParams = new URLSearchParams(window.location.search);
+  const boardId = urlParams.get("id");
+
+  if (!boardId) {
+    alert("No board ID provided!");
+    window.location.href = "dashboard.html";
+    return;
+  }
+
+  const boardTitle = document.getElementById("boardTitle");
+  const columnsContainer = document.getElementById("columns");
+
+  try {
+    // Fetch Board Details
+    const { data: board, error: boardError } = await supabase
+      .from("boards")
+      .select("*")
+      .eq("id", boardId)
+      .single();
+
+    if (boardError || !board) {
+      console.error("Board fetch error:", boardError);
+      alert("Failed to load board.");
+      return;
+    }
+    boardTitle.textContent = board.name;
+
+    // Fetch Columns
+    const { data: columns, error: colError } = await supabase
+      .from("columns")
+      .select("*")
+      .eq("board_id", boardId)
+      .order("order");
+
+    if (colError) {
+      console.error("Column fetch error:", colError);
+      alert("Failed to load columns.");
+      return;
+    }
+
+    // Render Columns
+    columns.forEach(async (column) => {
+      const colDiv = document.createElement("div");
+      colDiv.className = "column fade-in";
+      colDiv.dataset.columnId = column.id;
+
+      colDiv.innerHTML = `
+        <h2>${column.name}</h2>
+        <div class="tasks" id="tasks-${column.id}"></div>
+      `;
+      columnsContainer.appendChild(colDiv);
+
+      // Fetch Tasks for this Column
+      const { data: tasks, error: taskError } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("column_id", column.id)
+        .order("created_at", { ascending: true });
+
+      if (taskError) {
+        console.error(`Tasks fetch error for column ${column.id}:`, taskError);
+        return;
+      }
+
+      // Render Tasks
+      const tasksDiv = document.getElementById(`tasks-${column.id}`);
+      tasks.forEach(task => {
+        const taskCard = document.createElement("div");
+        taskCard.className = "card fade-in";
+        taskCard.dataset.taskId = task.id;
+
+        taskCard.innerHTML = `
+          <h3 class="card-title">${task.title}</h3>
+          <p>${task.description || "No description"}</p>
+          <div class="card-meta">
+            <span class="badge">${task.priority}</span>
+            <span class="badge">${task.category}</span>
+          </div>
+        `;
+        tasksDiv.appendChild(taskCard);
+      });
+    });
+
+  } catch (err) {
+    console.error("Unexpected error:", err);
+    alert("An unexpected error occurred.");
+  }
 });
+
+// Logout
+function logout() {
+  localStorage.removeItem("loggedInUser");
+  window.location.href = "login.html";
+}
 
 function resetFilters() {
   location.reload();

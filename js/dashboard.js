@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       .select("*")
       .in("id", boardIds);
 
-    allBoards = boards; // Save for filtering
+    allBoards = boards;
     renderBoards(allBoards);
 
   } catch (err) {
@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     showToast("Error loading boards.", "error");
   }
 
-  // Search filter
+  // Filter boards on search
   searchInput.addEventListener("input", () => {
     const query = searchInput.value.toLowerCase();
     const filtered = allBoards.filter(board =>
@@ -57,7 +57,7 @@ function renderBoards(boards) {
     const isOwner = String(board.owner_id) === String(JSON.parse(localStorage.getItem("loggedInUser")).id);
     const card = document.createElement("div");
     card.className = "board-card fade-in";
-    card.style.backgroundColor = board.theme_color || "#1f1f1f";
+    card.style.backgroundColor = board.theme_color || "#1e1e1e";
 
     card.innerHTML = `
       <h3>${board.name}</h3>
@@ -77,7 +77,7 @@ function renderBoards(boards) {
   });
 }
 
-// Toast notification
+// Toast
 function showToast(message, type = "info") {
   const toast = document.createElement("div");
   toast.className = `toast ${type}`;

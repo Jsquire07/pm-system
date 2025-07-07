@@ -836,3 +836,16 @@ body.login {
   margin-right: 0.3rem;
   font-size: 0.8rem;
 }
+.columns {
+  display: flex;
+  gap: 1.5rem;
+  overflow-x: auto;
+}
+
+.column {
+  background: #1e1e1e;
+  border-radius: 8px;
+  min-width: 250px;
+  padding: 1rem;
+  flex-shrink: 0;
+}

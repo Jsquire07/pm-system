@@ -2,56 +2,70 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard | PM SYSTEM PROTOTYPE1</title>
   <link rel="stylesheet" href="css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </head>
 
 <body>
   <!-- Sidebar -->
-  <div class="sidebar">
-    <h2 class="sidebar-title">PM SYSTEM<br>PROTOTYPE1</h2>
-    <div class="sidebar-content">
-      <nav class="sidebar-nav">
-        <ul>
-          <li><a class="sidebar-button active">🏠 Dashboard</a></li>
-          <li><a href="employees.html" class="sidebar-button">👥 Employees</a></li>
-          <li><a href="chat.html" class="sidebar-button">💬 Chat</a></li>
-        </ul>
-      </nav>
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>PM SYSTEM</h2>
     </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="sidebar-link active"><i class="fas fa-home"></i> Dashboard</a>
+      <a href="employees.html" class="sidebar-link"><i class="fas fa-users"></i> Employees</a>
+      <a href="chat.html" class="sidebar-link"><i class="fas fa-comments"></i> Chat</a>
+    </nav>
     <div class="sidebar-footer">
-      <button class="sidebar-button logout-button" onclick="logout()">🚪 Logout</button>
-
+      <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
     </div>
-  </div>
+  </aside>
 
   <!-- Main Content -->
-  <main class="dashboard">
-    <header class="dashboard-header">
-      <h1 id="welcomeMessage">Welcome!</h1>
-      <div class="board-controls">
-        <a href="create_board.html" class="button">➕ Create Board</a>
-        <a href="join_board.html" class="button">🔗 Join Board</a>
+  <div class="main-content">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <div class="search-box">
+        <input type="text" placeholder="Search boards, tasks..." />
+        <i class="fas fa-search"></i>
+      </div>
+      <div class="top-bar-actions">
+        <i class="fas fa-bell notification-icon"></i>
+        <div class="profile">
+          <span class="profile-name">Jake</span>
+          <img src="https://i.pravatar.cc/40" alt="User Avatar" class="avatar">
+        </div>
       </div>
     </header>
 
-    <section class="boards-section">
-      <h2>Your Boards</h2>
-      <div id="boardsList" class="boards-grid">
-        <!-- Populated by dashboard.js -->
+    <!-- Welcome & Controls -->
+    <section class="dashboard-header">
+      <div>
+        <h1 id="welcomeMessage">Welcome, Jake!</h1>
+        <p class="subtext">Here’s what’s happening on your boards today.</p>
+      </div>
+      <div class="controls">
+        <a href="create_board.html" class="button primary">➕ Create Board</a>
+        <a href="join_board.html" class="button secondary">🔗 Join Board</a>
       </div>
     </section>
-  </main>
 
-  <!-- Supabase Setup -->
+    <!-- Boards Grid -->
+    <section class="boards-grid" id="boardsList">
+      <!-- Populated dynamically -->
+    </section>
+  </div>
+
   <script>
     const supabase = window.supabase.createClient(
       'https://qqlsttamprrcljljcqrk.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxbHN0dGFtcHJyY2xqbGpjcXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTQ2NTcsImV4cCI6MjA2NDQzMDY1N30.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g'
     );
-    window.supabase = supabase; // ✅ Ensure global access
+    window.supabase = supabase;
   </script>
   <script src="js/dashboard.js"></script>
 </body>

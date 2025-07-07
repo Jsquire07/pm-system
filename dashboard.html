@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard | PM SYSTEM PROTOTYPE1</title>
   <link rel="stylesheet" href="css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -23,7 +23,6 @@
     </div>
     <div class="sidebar-footer">
       <button class="sidebar-button logout-button" onclick="logout()">🚪 Logout</button>
-
     </div>
   </div>
 
@@ -40,7 +39,7 @@
     <section class="boards-section">
       <h2>Your Boards</h2>
       <div id="boardsList" class="boards-grid">
-        <!-- Populated by dashboard.js -->
+        <!-- Populated dynamically -->
       </div>
     </section>
   </main>
@@ -51,7 +50,7 @@
       'https://qqlsttamprrcljljcqrk.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxbHN0dGFtcHJyY2xqbGpjcXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTQ2NTcsImV4cCI6MjA2NDQzMDY1N30.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g'
     );
-    window.supabase = supabase; // ✅ Ensure global access
+    window.supabase = supabase;
   </script>
   <script src="js/dashboard.js"></script>
 </body>

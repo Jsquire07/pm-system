@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const boardList = document.getElementById("boardsList");
   welcome.textContent = `Welcome, ${user.name}!`;
 
-  // Step 1: Get board memberships
+  // Get board memberships
   const { data: memberships, error: membershipError } = await supabase
     .from("board_members")
     .select("board_id")
@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  // Step 2: Get boards
+  // Get boards
   const { data: boards, error: boardError } = await supabase
     .from("boards")
     .select("*")
@@ -41,29 +41,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  // Step 3: Render each board
+  // Render each board
   boards.forEach(board => {
     const isOwner = String(board.owner_id) === String(user.id);
 
     const card = document.createElement("div");
     card.className = "card";
-    card.style.backgroundColor = board.theme_color || "#ffffff";
+    card.style.backgroundColor = board.theme_color || "#1f1f1f";
 
     const icon = board.icon_url
-      ? `<img src="${board.icon_url}" alt="Board Icon" style="width:40px; height:40px; border-radius:8px; margin-bottom:10px;">`
+      ? `<img src="${board.icon_url}" alt="Board Icon" class="board-icon">`
       : "";
 
     card.innerHTML = `
-      <h2>${board.name}</h2>
       ${icon}
+      <h2>${board.name}</h2>
       <p class="board-description">${board.description || "No description provided."}</p>
-      <p>Owner ID: ${board.owner_id}</p>
-      <p>Join Code: <code>${board.code}</code></p>
+      <p class="board-meta">Join Code: <code>${board.code}</code></p>
       <a href="board.html?id=${board.id}" class="button">Open Board</a>
       ${isOwner ? `
-        <a href="board_settings.html?id=${board.id}"
-           class="button settings"
-           onclick="localStorage.setItem('currentBoardId', '${board.id}')">⚙️ Settings</a>
+        <a href="board_settings.html?id=${board.id}" class="button settings">⚙️ Settings</a>
       ` : ""}
     `;
 

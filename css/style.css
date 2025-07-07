@@ -1,4 +1,4 @@
-/* === Reset === */
+/* === Global Reset === */
 * {
   margin: 0;
   padding: 0;
@@ -6,127 +6,149 @@
 }
 
 body {
-  height: 100vh;
   font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif;
-  background: #121212; /* dark neutral background */
+  background-color: #121212;
   color: #e0e0e0;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  height: 100vh;
+  overflow: hidden;
 }
 
-/* === Background (subtle animated blobs) === */
-.background {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  z-index: -1;
-  background: radial-gradient(circle at 30% 30%, #1f1f1f, transparent 50%),
-              radial-gradient(circle at 70% 70%, #1a1a1a, transparent 50%);
-  animation: subtleMove 15s infinite alternate ease-in-out;
-}
-
-@keyframes subtleMove {
-  0% { background-position: 30% 30%, 70% 70%; }
-  100% { background-position: 35% 35%, 65% 65%; }
-}
-
-/* === Login Form === */
-.form-view {
+/* === Sidebar === */
+.sidebar {
+  width: 260px;
+  background-color: #1f1f1f;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  min-height: 100vh;
-  padding: 1rem;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.5rem 1rem;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.5);
 }
 
-.form-container {
-  background: #1e1e1e;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-  padding: 2.5rem;
-  width: 100%;
-  max-width: 420px;
-  text-align: center;
-  animation: fadeIn 0.6s ease-out forwards;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.form-container h1 {
-  font-size: 1.8rem;
+.sidebar-title {
+  font-size: 1.4rem;
   font-weight: 700;
   color: #ffffff;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
-/* === Inputs & Buttons === */
-input, select {
+.sidebar-nav ul {
+  list-style: none;
+}
+
+.sidebar-button {
+  display: block;
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.8rem 1rem;
+  background-color: #2a2a2a;
   border-radius: 8px;
-  border: 1px solid #333;
-  background: #2c2c2c;
-  color: #e0e0e0;
-  font-size: 1rem;
   margin-bottom: 1rem;
-  outline: none;
-  transition: border-color 0.3s, background 0.3s;
-}
-
-input::placeholder {
-  color: #aaaaaa;
-}
-
-input:focus {
-  border-color: #00bcd4; /* cyan accent */
-  background: #333333;
-}
-
-button {
-  width: 100%;
-  padding: 0.8rem;
-  background: #00bcd4; /* cyan button */
-  color: #121212;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
+  color: #e0e0e0;
+  text-decoration: none;
   transition: background 0.3s, transform 0.2s;
 }
 
-button:hover {
-  background: #00acc1;
+.sidebar-button.active {
+  background-color: #00bcd4;
+  color: #121212;
+  font-weight: 600;
+}
+
+.sidebar-button:hover {
+  background-color: #333333;
+  transform: translateX(4px);
+}
+
+.logout-button {
+  background-color: #e53935;
+  color: #fff;
+}
+
+.logout-button:hover {
+  background-color: #d32f2f;
+}
+
+/* === Main Dashboard === */
+.dashboard {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.dashboard-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.board-controls .button {
+  background-color: #00bcd4;
+  color: #121212;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.board-controls .button:hover {
+  background-color: #00acc1;
   transform: translateY(-2px);
 }
 
-.toggle-link {
-  color: #00bcd4;
-  cursor: pointer;
-  margin-top: 1rem;
-  font-size: 0.95rem;
+/* === Boards Grid === */
+.boards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
 }
 
-.toggle-link:hover {
-  text-decoration: underline;
+.card {
+  background-color: #1f1f1f;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.form-message.error {
-  color: #ef5350;
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+}
+
+.card h2 {
+  font-size: 1.3rem;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+
+.card .board-description {
+  color: #b0b0b0;
+  margin-bottom: 0.8rem;
+}
+
+.card .button {
+  background-color: #00bcd4;
+  color: #121212;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  text-decoration: none;
+  display: inline-block;
   margin-top: 0.5rem;
 }
 
-/* Fade for toggle fields */
-.fade {
-  opacity: 0;
-  transition: opacity 0.3s ease;
+.card .button.settings {
+  background-color: #424242;
+  color: #e0e0e0;
 }
 
-.fade.active {
-  opacity: 1;
+.card .button.settings:hover {
+  background-color: #333333;
 }

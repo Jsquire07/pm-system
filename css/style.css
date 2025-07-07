@@ -270,3 +270,66 @@ body {
   opacity: 1;
   transform: translateY(0);
 }
+/* === Sidebar Modern Upgrade === */
+.sidebar {
+  background-color: #181818;
+  border-right: 1px solid #2a2a2a;
+}
+
+.sidebar-header h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 1px;
+  margin-bottom: 1rem;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  color: #d0d0d0;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.sidebar-link.active {
+  background-color: #4f46e5; /* Modern indigo accent */
+  color: #ffffff;
+}
+
+.sidebar-link:hover {
+  background-color: #2e2e2e;
+  color: #f0f0f0;
+}
+
+.logout-btn {
+  background-color: #ef4444;
+  color: #fff;
+}
+
+.logout-btn:hover {
+  background-color: #dc2626;
+}
+
+/* === Search Bar Polished === */
+.search-box {
+  background: #2a2a2a;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+}
+
+.search-box input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #f5f5f5;
+  font-size: 0.95rem;
+}
+
+.search-box input::placeholder {
+  color: #999999;
+}

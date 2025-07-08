@@ -1,7 +1,21 @@
+function showNotification(message, type = "info") {
+    const container = document.getElementById("notificationContainer");
+
+    const notification = document.createElement("div");
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+
+    container.appendChild(notification);
+
+    setTimeout(() => {
+        notification.remove();
+    }, 3400);
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
     const user = JSON.parse(localStorage.getItem("loggedInUser"));
     if (!user) {
-        alert("Not logged in.");
+        showNotification("Not logged in.", "error");
         window.location.href = "index.html";
         return;
     }
@@ -16,7 +30,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     if (!boardId) {
-        alert("No board selected.");
+        showNotification("No board selected.", "error");
         return;
     }
 
@@ -27,16 +41,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         .single();
 
     if (error || !board) {
-        alert("Failed to load board settings.");
+        showNotification("Failed to load board settings.", "error");
         return;
     }
 
     if (String(board.owner_id) !== String(user.id)) {
-        alert("Only the board owner can access settings.");
+        showNotification("Only the board owner can access settings.", "error");
         window.location.href = "dashboard.html";
         return;
     }
-
 
     // Set form values
     document.getElementById("boardName").value = board.name;
@@ -63,92 +76,42 @@ document.addEventListener("DOMContentLoaded", async () => {
                 name,
                 description,
                 theme_color: color
-                // icon_url is no longer touched
             })
             .eq("id", boardId);
 
         if (updateError) {
-            alert("Failed to save changes.");
             console.error(updateError);
+            showNotification("Failed to save changes.", "error");
         } else {
-            alert("Board updated successfully.");
-            window.location.reload();
+            showNotification("Board updated successfully.", "success");
         }
     });
 
-    // Load members (simplified without join)
-    const { data: membersData, error: memberError } = await supabase
-        .from("board_members")
-        .select("*")
-        .eq("board_id", boardId);
-
-    const membersList = document.getElementById("membersList");
-    if (memberError) {
-        membersList.innerHTML = "<p>Error loading members.</p>";
-        return;
-    }
-
-    membersList.innerHTML = membersData
-        .map(member => `
-      <div class="member">
-        <strong>${member.user_id}</strong>
-        <select data-user="${member.user_id}" class="permission-select">
-          <option value="view" ${member.permission === "view" ? "selected" : ""}>View</option>
-          <option value="edit" ${member.permission === "edit" ? "selected" : ""}>Edit</option>
-        </select>
-        <button class="kick-btn" data-user="${member.user_id}">❌ Kick</button>
-      </div>
-    `)
-        .join("");
-
-    document.querySelectorAll(".kick-btn").forEach(button => {
-        button.addEventListener("click", async () => {
-            const userId = button.getAttribute("data-user");
-            await supabase
-                .from("board_members")
-                .delete()
-                .eq("user_id", userId)
-                .eq("board_id", boardId);
-            window.location.reload();
-        });
-    });
-
-    document.querySelectorAll(".permission-select").forEach(select => {
-        select.addEventListener("change", async () => {
-            const userId = select.getAttribute("data-user");
-            const newPermission = select.value;
-            await supabase
-                .from("board_members")
-                .update({ permission: newPermission })
-                .eq("user_id", userId)
-                .eq("board_id", boardId);
-        });
-    });
+    await loadMembers(boardId, board.owner_id);
 });
 
 async function loadMembers(boardId, ownerId) {
-    // Step 1: Get all members of this board
     const { data: members, error: memberError } = await supabase
         .from("board_members")
         .select("*")
         .eq("board_id", boardId);
 
     if (memberError) {
-        console.error("Error loading board members:", memberError.message);
+        console.error(memberError.message);
+        showNotification("Error loading members.", "error");
         return;
     }
 
-    // Step 2: Get all users
     const { data: users, error: userError } = await supabase
         .from("users")
         .select("id, name, email");
 
     if (userError) {
-        console.error("Error loading users:", userError.message);
+        console.error(userError.message);
+        showNotification("Error loading user details.", "error");
         return;
     }
 
-    // Step 3: Match each board member with their user details
     const container = document.getElementById("membersList");
     container.innerHTML = "";
 
@@ -159,18 +122,18 @@ async function loadMembers(boardId, ownerId) {
         const div = document.createElement("div");
         div.className = "member-row";
         div.innerHTML = `
-      <strong>${user?.name || "Unknown"}</strong>
-      <span>${user?.email || ""}</span>
-      <select ${isOwner ? "disabled" : ""} data-user="${member.user_id}">
-        <option value="view" ${member.permission === "view" ? "selected" : ""}>View Only</option>
-        <option value="edit" ${member.permission === "edit" ? "selected" : ""}>Can Edit</option>
-      </select>
-      ${isOwner ? `<span class="badge">Owner</span>` : `<button data-kick="${member.user_id}">Kick</button>`}
-    `;
+            <strong>${user?.name || "Unknown"}</strong>
+            <span>${user?.email || ""}</span>
+            <select ${isOwner ? "disabled" : ""} data-user="${member.user_id}">
+                <option value="view" ${member.permission === "view" ? "selected" : ""}>View Only</option>
+                <option value="edit" ${member.permission === "edit" ? "selected" : ""}>Can Edit</option>
+            </select>
+            ${isOwner ? `<span class="badge">Owner</span>` : `<button class="kick-btn" data-user="${member.user_id}">❌ Kick</button>`}
+        `;
         container.appendChild(div);
     });
 
-    // Change permission handler
+    // Permission change
     container.querySelectorAll("select").forEach(select => {
         select.addEventListener("change", async (e) => {
             const userId = e.target.dataset.user;
@@ -183,16 +146,19 @@ async function loadMembers(boardId, ownerId) {
                 .eq("board_id", boardId);
 
             if (error) {
-                alert("Failed to update permission.");
                 console.error(error);
+                showNotification("Failed to update permission.", "error");
+            } else {
+                showNotification("Member permissions updated.", "success");
             }
         });
     });
 
-    // Kick button handler
-    container.querySelectorAll("button[data-kick]").forEach(btn => {
+    // Kick button
+    container.querySelectorAll(".kick-btn").forEach(btn => {
         btn.addEventListener("click", async () => {
-            const userId = btn.dataset.kick;
+            const userId = btn.dataset.user;
+
             if (!confirm("Are you sure you want to remove this member?")) return;
 
             const { error } = await supabase
@@ -202,10 +168,11 @@ async function loadMembers(boardId, ownerId) {
                 .eq("board_id", boardId);
 
             if (error) {
-                alert("Failed to remove member.");
                 console.error(error);
+                showNotification("Failed to remove member.", "error");
             } else {
-                loadMembers(boardId, ownerId); // reload
+                showNotification("Member removed.", "success");
+                loadMembers(boardId, ownerId);
             }
         });
     });

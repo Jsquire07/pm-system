@@ -78,6 +78,7 @@ document.getElementById("columnForm").addEventListener("submit", async (e) => {
         .from("columns")
         .update({ name })
         .eq("id", editingColumnId);
+      showNotification("Column name updated.", "success");
     }
   } else {
     const newColumn = {
@@ -90,12 +91,16 @@ document.getElementById("columnForm").addEventListener("submit", async (e) => {
     const { error } = await supabase.from("columns").insert([newColumn]);
     if (error) {
       console.error("Error creating column:", error.message);
+      showNotification("Failed to create column.", "error");
+    } else {
+      showNotification("New column added.", "success");
     }
   }
 
   closeColumnModal();
   loadBoard();
 });
+
 
 async function editColumn(id) {
   const columns = await getColumns();
@@ -112,11 +117,10 @@ async function deleteColumn(id) {
   if (!confirm("Delete this column?")) return;
 
   await supabase.from("columns").delete().eq("id", id);
-  await supabase.from("tasks")
-    .delete()
-    .eq("status", id)
-    .eq("board_id", boardId);
+  await supabase.from("tasks").delete().eq("status", id).eq("board_id", boardId);
+  showNotification("Column deleted.", "success");
   loadBoard();
+
 }
 
 async function moveColumn(id, direction) {
@@ -263,7 +267,12 @@ document.getElementById("newTaskForm").addEventListener("submit", async (e) => {
   };
 
   const { error } = await supabase.from("tasks").insert([task]);
-  if (error) console.error("Supabase Insert Error:", error);
+  if (error) {
+    console.error("Supabase Insert Error:", error);
+    showNotification("Failed to create task.", "error");
+  } else {
+    showNotification("Task created successfully.", "success");
+  }
 
   closeTaskModal();
   loadBoard();
@@ -501,21 +510,26 @@ document.addEventListener("DOMContentLoaded", () => {
   loadBoard();
 
   document.getElementById("filterAssignee").addEventListener("change", e => {
-    currentFilters.assignee = e.target.value;
-    loadBoard();
-  });
-  document.getElementById("filterPriority").addEventListener("change", e => {
-    currentFilters.priority = e.target.value;
-    loadBoard();
-  });
-  document.getElementById("filterCategory").addEventListener("change", e => {
-    currentFilters.category = e.target.value;
-    loadBoard();
-  });
-  document.getElementById("filterDueDate").addEventListener("change", e => {
-    currentFilters.dueDate = e.target.value;
-    loadBoard();
-  });
+  currentFilters.assignee = e.target.value;
+  showNotification("Filters applied.", "info");
+  loadBoard();
+});
+document.getElementById("filterPriority").addEventListener("change", e => {
+  currentFilters.priority = e.target.value;
+  showNotification("Filters applied.", "info");
+  loadBoard();
+});
+document.getElementById("filterCategory").addEventListener("change", e => {
+  currentFilters.category = e.target.value;
+  showNotification("Filters applied.", "info");
+  loadBoard();
+});
+document.getElementById("filterDueDate").addEventListener("change", e => {
+  currentFilters.dueDate = e.target.value;
+  showNotification("Filters applied.", "info");
+  loadBoard();
+});
+
 
   const leaveBtn = document.getElementById("leaveBoardBtn");
   if (leaveBtn) {
@@ -544,8 +558,8 @@ function resetFilters() {
   document.getElementById("filterPriority").value = "";
   document.getElementById("filterCategory").value = "";
   document.getElementById("filterDueDate").value = "";
+  showNotification("Filters reset.", "info");
   loadBoard();
-
 }
 
 document.getElementById("confirmLeaveBtn").addEventListener("click", leaveBoard);
@@ -564,10 +578,26 @@ async function leaveBoard() {
 
   if (error) {
     console.error("Error leaving board:", error);
-    alert("Failed to leave board. Try again.");
+    showNotification("Failed to leave board. Try again.", "error");
+
     return;
   }
 
-  alert("You have left the board.");
+  showNotification("You have left the board.", "success");
+
   window.location.href = "dashboard.html";
+}
+function showNotification(message, type = "info") {
+  const container = document.getElementById("notificationContainer");
+
+  const notification = document.createElement("div");
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+
+  container.appendChild(notification);
+
+  // Remove notification after animation
+  setTimeout(() => {
+    notification.remove();
+  }, 3400); // Match fadeOut timing + delay
 }

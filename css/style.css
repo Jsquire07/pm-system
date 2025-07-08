@@ -1417,3 +1417,11 @@ body {
     box-sizing: border-box;
   }
 }
+button.danger {
+  background-color: #e74c3c;
+  color: white;
+}
+
+button.danger:hover {
+  background-color: #c0392b;
+}

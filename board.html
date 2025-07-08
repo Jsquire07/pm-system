@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Project Board | PROTOTYPE1</title>
-  <link rel="stylesheet" href="css/style.css"/>
+  <link rel="stylesheet" href="css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
@@ -31,8 +32,10 @@
   <main class="board">
     <header class="board-header">
       <section class="filter-panel">
-        <select id="filterAssignee"><option value="">All Assignees</option></select>
-        <input type="date" id="filterDueDate"/>
+        <select id="filterAssignee">
+          <option value="">All Assignees</option>
+        </select>
+        <input type="date" id="filterDueDate" />
         <select id="filterPriority">
           <option value="">All Priorities</option>
           <option>Low</option>
@@ -58,6 +61,8 @@
       <h1 id="boardTitle">Project Board</h1>
       <button id="newTaskBtn">+ New Task</button>
       <button id="newColumnBtn">+ New Column</button>
+      <button id="leaveBoardBtn" class="danger">🚪 Leave Board</button>
+
     </header>
 
     <div class="columns-container">
@@ -71,9 +76,9 @@
       <h2>New Task</h2>
       <form id="newTaskForm">
         <label>Title:</label>
-        <input type="text" id="newTaskTitle" required/>
+        <input type="text" id="newTaskTitle" required />
         <label>Description:</label>
-        <input type="text" id="newTaskDescription" required/>
+        <input type="text" id="newTaskDescription" required />
         <label>Assignee:</label>
         <select id="newTaskAssignee"></select>
         <label>Priority:</label>
@@ -83,9 +88,9 @@
           <option>High</option>
         </select>
         <label>Due Date:</label>
-        <input type="date" id="newTaskDueDate"/>
+        <input type="date" id="newTaskDueDate" />
         <label>Due Time:</label>
-        <input type="time" id="newTaskDueTime"/>
+        <input type="time" id="newTaskDueTime" />
         <label>Category:</label>
         <select id="newTaskCategory">
           <option value="Scripting">Scripting</option>
@@ -111,7 +116,7 @@
       <h2 id="columnModalTitle">New Column</h2>
       <form id="columnForm">
         <label>Column Name:</label>
-        <input type="text" id="columnNameInput" required/>
+        <input type="text" id="columnNameInput" required />
         <div class="modal-actions">
           <button type="submit">Save</button>
           <button type="button" id="cancelColumnBtn">Cancel</button>
@@ -141,4 +146,5 @@
     });
   </script>
 </body>
+
 </html>

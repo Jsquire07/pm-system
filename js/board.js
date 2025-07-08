@@ -533,4 +533,29 @@ function resetFilters() {
   document.getElementById("filterDueDate").value = "";
   loadBoard();
 
+  document.getElementById("leaveBoardBtn").addEventListener("click", leaveBoard);
+
+}
+async function leaveBoard() {
+  if (!confirm("Are you sure you want to leave this board?")) return;
+
+  const user = JSON.parse(localStorage.getItem("loggedInUser"));
+  if (!user) {
+    alert("No user logged in.");
+    return;
+  }
+
+  const { error } = await supabase
+    .from('board_members')
+    .delete()
+    .match({ board_id: boardId, user_id: user.id });
+
+  if (error) {
+    console.error("Error leaving board:", error);
+    alert("Failed to leave board. Try again.");
+    return;
+  }
+
+  alert("You have left the board.");
+  window.location.href = "dashboard.html";
 }

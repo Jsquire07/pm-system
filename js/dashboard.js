@@ -40,10 +40,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     boardList.innerHTML = "<p>Error loading your boards.</p>";
     return;
   }
+  // Get unique owner IDs
+  const ownerIds = [...new Set(boards.map(b => b.owner_id))];
+
+  const { data: owners, error: ownersError } = await supabase
+    .from("users")
+    .select("id, name")
+    .in("id", ownerIds);
+
+  if (ownersError) {
+    console.error("Error loading owners:", ownersError.message);
+  }
+
 
   // Step 3: Render each board
   boards.forEach(board => {
     const isOwner = String(board.owner_id) === String(user.id);
+
+    const owner = owners.find(u => u.id === board.owner_id);
+    const ownerDisplay = owner ? `${owner.name} (${owner.id})` : `Unknown (${board.owner_id})`;
 
     const card = document.createElement("div");
     card.className = "card";
@@ -57,7 +72,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       <h2>${board.name}</h2>
       ${icon}
       <p class="board-description">${board.description || "No description provided."}</p>
-      <p>Owner ID: ${board.owner_id}</p>
+      <p>Owner: ${ownerDisplay}</p>
+
       <p>
         Join Code: <code>${board.code}</code>
         <button class="copy-code-btn" data-code="${board.code}">📋 Copy</button>

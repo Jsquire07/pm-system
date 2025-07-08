@@ -1511,3 +1511,18 @@ button.danger:hover {
 .modal .danger:hover {
   background-color: #c0392b;
 }
+.copy-code-btn {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  padding: 2px 6px;
+  margin-left: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.copy-code-btn:hover {
+  background-color: #5a6268;
+}

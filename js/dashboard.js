@@ -58,7 +58,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       ${icon}
       <p class="board-description">${board.description || "No description provided."}</p>
       <p>Owner ID: ${board.owner_id}</p>
-      <p>Join Code: <code>${board.code}</code></p>
+      <p>
+        Join Code: <code>${board.code}</code>
+        <button class="copy-code-btn" data-code="${board.code}">📋 Copy</button>
+      </p>
+
       <a href="board.html?id=${board.id}" class="button">Open Board</a>
       ${isOwner ? `
         <a href="board_settings.html?id=${board.id}"
@@ -69,4 +73,30 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     boardList.appendChild(card);
   });
+  document.querySelectorAll(".copy-code-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const code = btn.dataset.code;
+      navigator.clipboard.writeText(code)
+        .then(() => {
+          showNotification(`Copied join code: ${code}`, "success");
+        })
+        .catch(() => {
+          showNotification("Failed to copy join code.", "error");
+        });
+    });
+  });
+  function showNotification(message, type = "info") {
+    const container = document.getElementById("notificationContainer");
+
+    const notification = document.createElement("div");
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+
+    container.appendChild(notification);
+
+    setTimeout(() => {
+      notification.remove();
+    }, 3000);
+  }
+
 });

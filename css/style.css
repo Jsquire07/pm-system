@@ -1526,3 +1526,41 @@ button.danger:hover {
 .copy-code-btn:hover {
   background-color: #000000;
 }
+.search-bar {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+}
+
+#dashboardSearch {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.search-results {
+  position: absolute;
+  top: 110%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 1000;
+  display: none;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.search-results div {
+  padding: 0.8rem 1rem;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.search-results div:hover {
+  background-color: #f7f7f7;
+}

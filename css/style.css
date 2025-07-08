@@ -1503,3 +1503,11 @@ button.danger:hover {
 .kick-btn:hover {
   background-color: #c0392b;
 }
+.modal .danger {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.modal .danger:hover {
+  background-color: #c0392b;
+}

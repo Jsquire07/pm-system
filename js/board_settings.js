@@ -90,6 +90,34 @@ document.addEventListener("DOMContentLoaded", async () => {
     await loadMembers(boardId, board.owner_id);
 });
 
+function showConfirm(message, onConfirm) {
+    const modal = document.getElementById("confirmModal");
+    const messageEl = document.getElementById("confirmModalMessage");
+    const yesBtn = document.getElementById("confirmYesBtn");
+    const cancelBtn = document.getElementById("confirmCancelBtn");
+
+    messageEl.textContent = message;
+    modal.style.display = "flex";
+
+    // Clear previous click handlers
+    yesBtn.replaceWith(yesBtn.cloneNode(true));
+    cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+
+    // Get fresh buttons
+    const newYesBtn = document.getElementById("confirmYesBtn");
+    const newCancelBtn = document.getElementById("confirmCancelBtn");
+
+    newYesBtn.addEventListener("click", () => {
+        modal.style.display = "none";
+        if (onConfirm) onConfirm();
+    });
+
+    newCancelBtn.addEventListener("click", () => {
+        modal.style.display = "none";
+    });
+}
+
+
 async function loadMembers(boardId, ownerId) {
     const { data: members, error: memberError } = await supabase
         .from("board_members")
@@ -129,14 +157,11 @@ async function loadMembers(boardId, ownerId) {
         container.appendChild(div);
     });
 
-    // Kick button
     container.querySelectorAll(".kick-btn").forEach(btn => {
-        btn.addEventListener("click", async () => {
-            const userId = btn.dataset.user;
+    btn.addEventListener("click", () => {
+        const userId = btn.dataset.user;
 
-            // Use modal confirm or browser confirm
-            if (!confirm("Are you sure you want to remove this member?")) return;
-
+        showConfirm("Are you sure you want to remove this member?", async () => {
             const { error } = await supabase
                 .from("board_members")
                 .delete()
@@ -152,4 +177,6 @@ async function loadMembers(boardId, ownerId) {
             }
         });
     });
+});
+
 }

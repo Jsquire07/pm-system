@@ -113,9 +113,9 @@ async function deleteColumn(id) {
 
   await supabase.from("columns").delete().eq("id", id);
   await supabase.from("tasks")
-  .delete()
-  .eq("status", id)
-  .eq("board_id", boardId);
+    .delete()
+    .eq("status", id)
+    .eq("board_id", boardId);
   loadBoard();
 }
 
@@ -497,7 +497,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = "index.html";
     return;
   }
-  
+
   loadBoard();
 
   document.getElementById("filterAssignee").addEventListener("change", e => {
@@ -517,12 +517,19 @@ document.addEventListener("DOMContentLoaded", () => {
     loadBoard();
   });
 
-  // ✅ ADD THIS HERE
   const leaveBtn = document.getElementById("leaveBoardBtn");
   if (leaveBtn) {
-    leaveBtn.addEventListener("click", leaveBoard);
+    leaveBtn.addEventListener("click", () => {
+      document.getElementById("leaveBoardModal").style.display = "flex";
+    });
   }
+
 });
+
+document.getElementById("cancelLeaveBtn").addEventListener("click", () => {
+  document.getElementById("leaveBoardModal").style.display = "none";
+});
+
 
 function resetFilters() {
   location.reload();
@@ -540,9 +547,10 @@ function resetFilters() {
   loadBoard();
 
 }
-async function leaveBoard() {
-  if (!confirm("Are you sure you want to leave this board?")) return;
 
+document.getElementById("confirmLeaveBtn").addEventListener("click", leaveBoard);
+
+async function leaveBoard() {
   const user = JSON.parse(localStorage.getItem("loggedInUser"));
   if (!user) {
     alert("No user logged in.");

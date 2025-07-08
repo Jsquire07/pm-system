@@ -516,6 +516,12 @@ document.addEventListener("DOMContentLoaded", () => {
     currentFilters.dueDate = e.target.value;
     loadBoard();
   });
+
+  // ✅ ADD THIS HERE
+  const leaveBtn = document.getElementById("leaveBoardBtn");
+  if (leaveBtn) {
+    leaveBtn.addEventListener("click", leaveBoard);
+  }
 });
 
 function resetFilters() {
@@ -532,8 +538,6 @@ function resetFilters() {
   document.getElementById("filterCategory").value = "";
   document.getElementById("filterDueDate").value = "";
   loadBoard();
-
-  document.getElementById("leaveBoardBtn").addEventListener("click", leaveBoard);
 
 }
 async function leaveBoard() {

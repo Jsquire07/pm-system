@@ -124,34 +124,9 @@ async function loadMembers(boardId, ownerId) {
         div.innerHTML = `
             <strong>${user?.name || "Unknown"}</strong>
             <span>${user?.email || ""}</span>
-            <select ${isOwner ? "disabled" : ""} data-user="${member.user_id}">
-                <option value="view" ${member.permission === "view" ? "selected" : ""}>View Only</option>
-                <option value="edit" ${member.permission === "edit" ? "selected" : ""}>Can Edit</option>
-            </select>
             ${isOwner ? `<span class="badge">Owner</span>` : `<button class="kick-btn" data-user="${member.user_id}">❌ Kick</button>`}
         `;
         container.appendChild(div);
-    });
-
-    // Permission change
-    container.querySelectorAll("select").forEach(select => {
-        select.addEventListener("change", async (e) => {
-            const userId = e.target.dataset.user;
-            const newPermission = e.target.value;
-
-            const { error } = await supabase
-                .from("board_members")
-                .update({ permission: newPermission })
-                .eq("user_id", userId)
-                .eq("board_id", boardId);
-
-            if (error) {
-                console.error(error);
-                showNotification("Failed to update permission.", "error");
-            } else {
-                showNotification("Member permissions updated.", "success");
-            }
-        });
     });
 
     // Kick button
@@ -159,6 +134,7 @@ async function loadMembers(boardId, ownerId) {
         btn.addEventListener("click", async () => {
             const userId = btn.dataset.user;
 
+            // Use modal confirm or browser confirm
             if (!confirm("Are you sure you want to remove this member?")) return;
 
             const { error } = await supabase

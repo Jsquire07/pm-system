@@ -1473,3 +1473,33 @@ button.danger:hover {
     transform: translateY(-20px);
   }
 }
+.member-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.member-row strong {
+  flex: 1;
+}
+
+.member-row span {
+  flex: 1;
+  color: #555;
+}
+
+.kick-btn {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.kick-btn:hover {
+  background-color: #c0392b;
+}

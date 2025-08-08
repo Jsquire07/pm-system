@@ -1,6 +1,6 @@
-const { createClient } = supabase;
+// chat.js — realtime, right-aligned "mine" bubbles, same hooks
 
-const supabaseClient = createClient(
+const supabaseClient = window.supabase.createClient(
   'https://qqlsttamprrcljljcqrk.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxbHN0dGFtcHJyY2xqbGpjcXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTQ2NTcsImV4cCI6MjA2NDQzMDY1N30.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g'
 );
@@ -11,10 +11,18 @@ const chatInput = document.getElementById("chatInput");
 const typingIndicator = document.getElementById("typingIndicator");
 
 const user = JSON.parse(localStorage.getItem("loggedInUser")) || {};
-const username = user.name || user.username || "Unknown";
+const currentUsername = user.name || user.username || "Unknown";
 
 let lastMessageId = 0;
+let typingTimeout;
+let isAtBottom = true;
 const userColors = {};
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
 
 function getUserColor(name) {
   if (!userColors[name]) {
@@ -49,55 +57,66 @@ async function loadMessages(initial = false) {
 }
 
 function appendMessage({ id, username, text, created_at }) {
+  // Avoid duplicate DOM if realtime + initial fetch overlap
+  if (chatBox.querySelector(`.message[data-id="${id}"]`)) return;
+
   const div = document.createElement("div");
-  div.className = "message";
+  const author = username || "Unknown";
+  const mine = author === currentUsername;
+  div.className = `message${mine ? " mine" : ""}`;
   div.dataset.id = id;
 
-  const timestamp = new Date(created_at).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const ts = created_at
+    ? new Date(created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    : "";
 
-  const isMine = username === user.name;
-  const userColor = getUserColor(username);
-  const highlightedText = text.replace(/@(\w+)/g, '<span class="mention">@$1</span>');
+  const color = getUserColor(author);
+  const safe = escapeHtml(text || "");
+  const highlighted = safe.replace(/@(\w+)/g, '<span class="mention">@$1</span>');
 
   div.innerHTML = `
-    <div class="meta" style="color: ${userColor}">
-      <strong>${username || "Unknown"}</strong>
-      <span class="timestamp">${timestamp}</span>
-      ${isMine ? `
-        <button class="edit-btn">✏️</button>
-        <button class="delete-btn">🗑</button>
+    <div class="meta" style="${mine ? "justify-content:flex-end;" : ""}">
+      <strong style="color:${color}">${escapeHtml(author)}</strong>
+      <span class="timestamp">${ts}</span>
+      ${mine ? `
+        <button class="edit-btn" title="Edit">✏️</button>
+        <button class="delete-btn" title="Delete">🗑</button>
       ` : ""}
     </div>
-    <div class="text">${highlightedText}</div>
+    <div class="text">${highlighted}</div>
   `;
 
   chatBox.appendChild(div);
 
-  if (isMine) {
+  if (mine) {
     div.querySelector(".edit-btn").onclick = () => editMessage(id, text);
     div.querySelector(".delete-btn").onclick = () => deleteMessage(id, div);
   }
 }
 
+function updateMessageInDom(id, newText) {
+  const el = chatBox.querySelector(`.message[data-id="${id}"] .text`);
+  if (!el) return;
+  const safe = escapeHtml(newText || "");
+  el.innerHTML = safe.replace(/@(\w+)/g, '<span class="mention">@$1</span>');
+}
+
+function removeMessageFromDom(id) {
+  const el = chatBox.querySelector(`.message[data-id="${id}"]`);
+  if (el) el.remove();
+}
+
 function editMessage(id, oldText) {
   const newText = prompt("Edit your message:", oldText);
   if (newText && newText !== oldText) {
-    supabaseClient
-      .from("messages")
-      .update({ text: newText })
-      .eq("id", id);
+    supabaseClient.from("messages").update({ text: newText }).eq("id", id);
   }
 }
 
 function deleteMessage(id, element) {
   if (confirm("Delete this message?")) {
-    supabaseClient
-      .from("messages")
-      .delete()
-      .eq("id", id);
+    supabaseClient.from("messages").delete().eq("id", id);
+    // DOM will also update via realtime; remove immediately for snappier UX
     element.remove();
   }
 }
@@ -108,10 +127,7 @@ chatForm.addEventListener("submit", async (e) => {
   if (!message) return;
 
   const { error } = await supabaseClient.from("messages").insert([
-    {
-      username,
-      text: message,
-    },
+    { username: currentUsername, text: message }
   ]);
 
   if (error) {
@@ -121,28 +137,52 @@ chatForm.addEventListener("submit", async (e) => {
   }
 
   chatInput.value = "";
+  typingIndicator.textContent = "";
 });
 
 chatInput.addEventListener("input", () => {
-  typingIndicator.textContent = `${username} is typing...`;
+  // Keep the indicator subtle; just show "typing…" locally
+  typingIndicator.textContent = "Typing…";
   clearTimeout(typingTimeout);
-  typingTimeout = setTimeout(() => typingIndicator.textContent = "", 1000);
+  typingTimeout = setTimeout(() => (typingIndicator.textContent = ""), 1000);
 });
-
-let typingTimeout;
-let isAtBottom = true;
 
 chatBox.addEventListener("scroll", () => {
   isAtBottom = chatBox.scrollTop + chatBox.clientHeight >= chatBox.scrollHeight - 20;
 });
 
 function scrollToBottom() {
-  if (isAtBottom) {
-    chatBox.scrollTop = chatBox.scrollHeight;
-  }
+  if (isAtBottom) chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  loadMessages(true);
-  setInterval(() => loadMessages(false), 1000);
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadMessages(true);
+
+  // Prefer realtime; fall back gracefully if not available
+  try {
+    const channel = supabaseClient
+      .channel("messages-stream")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        (payload) => {
+          appendMessage(payload.new);
+          scrollToBottom();
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "messages" },
+        (payload) => updateMessageInDom(payload.new.id, payload.new.text)
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "messages" },
+        (payload) => removeMessageFromDom(payload.old.id)
+      )
+      .subscribe();
+  } catch (e) {
+    console.warn("Realtime not available; staying on manual load.", e);
+    setInterval(() => loadMessages(false), 1000);
+  }
 });

@@ -1,72 +1,300 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Project Board | PROTOTYPE1</title>
   <link rel="stylesheet" href="css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Page-scoped layout polish (matches dashboard look) -->
+  <style>
+    :root{
+      --bg:#0f1216;
+      --panel:#141a22;
+      --panel-2:#11161d;
+      --border:#1f2833;
+      --text:#e6edf3;
+      --muted:#9aa6b2;
+      --primary:#6e8efb;
+      --primary-700:#5c79e4;
+      --ring: rgba(110,142,251,0.45);
+      --shadow: 0 14px 34px rgba(0,0,0,0.35);
+      --radius:14px;
+      --radius-sm:10px;
+      --rail: 80px;      /* collapsed sidebar width */
+      --sidebar: 240px;  /* expanded sidebar width */
+      --g: 1rem;
+      --container: 1280px;
+    }
+    body { background: var(--bg); color: var(--text); }
+
+    /* --- Sidebar (same as dashboard) --- */
+    .sidebar{
+      position: fixed; inset: 0 auto 0 0; width: var(--sidebar);
+      display: grid; grid-template-rows: auto 1fr auto;
+      padding: 12px; gap: 10px;
+      background: linear-gradient(180deg,#0d1218,#0a0f15);
+      border-right: 1px solid var(--border);
+      transition: width .18s ease;
+      z-index: 100;
+    }
+    body.sidebar-collapsed .sidebar{ width: var(--rail); }
+
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      padding:10px; border-radius:12px;
+      background: linear-gradient(180deg,#141a22,#11161d);
+      border:1px solid var(--border);
+    }
+    .brand .logo{ width:30px; height:30px; border-radius:8px; background:linear-gradient(180deg,var(--primary),var(--primary-700)); }
+    .brand .title{ font-weight:800; letter-spacing:.2px; line-height:1.1; }
+    body.sidebar-collapsed .brand .title{ display:none; }
+
+    .sidebar-nav ul{ list-style:none; margin:8px 0 0; padding:0; display:grid; gap:8px; }
+    .nav-item{ position:relative; }
+    .sidebar-button{
+      display:flex; align-items:center; gap:12px;
+      padding:10px 12px; border-radius:12px;
+      background: linear-gradient(180deg,#1a2230,#141b26);
+      border:1px solid #1b2430; color:var(--text); text-decoration:none;
+      transition: background .14s ease, border-color .14s ease, transform .14s ease;
+      min-height:48px;
+    }
+    .sidebar-button .icon{ width:24px; display:grid; place-items:center; font-size:18px; }
+    .sidebar-button .label{ white-space:nowrap; font-weight:600; }
+    .sidebar-button:hover{ transform: translateY(-1px); border-color:#2a3645; }
+    .sidebar-button.active{
+      background: linear-gradient(180deg,rgba(110,142,251,.18),rgba(34,211,238,.14));
+      border-color:#3353ff4d;
+      position:relative;
+    }
+    .sidebar-button.active::before{
+      content:""; position:absolute; left:-12px; top:8px; bottom:8px; width:3px;
+      border-radius:3px; background: linear-gradient(180deg,var(--primary),#22d3ee);
+    }
+    body.sidebar-collapsed .sidebar-button .label{ display:none; }
+    .nav-item .tooltip{
+      position:absolute; left: calc(100% + 10px); top:50%; transform:translateY(-50%);
+      background:#0f141a; border:1px solid var(--border); color:var(--text);
+      padding:6px 10px; border-radius:8px; font-size:12px; white-space:nowrap; box-shadow:var(--shadow); display:none;
+    }
+    body.sidebar-collapsed .nav-item:hover .tooltip{ display:block; }
+
+    .sidebar-footer{ display:grid; gap:10px; }
+    .collapse-toggle{
+      background: transparent; color:var(--text);
+      border:1px solid #243243; border-radius:10px; padding:10px; cursor:pointer;
+    }
+    .logout-button{ border:1px solid #3b1b1b; background: linear-gradient(180deg,#2a1313,#1e0e0e); }
+    .logout-button:hover{ border-color:#572525; }
+
+    /* --- Main area --- */
+    .board{
+      margin-left: var(--sidebar);
+      transition: margin-left .18s ease;
+      padding: 24px;
+      min-height: 100vh;
+    }
+    body.sidebar-collapsed .board{ margin-left: var(--rail); }
+    .container{ max-width: var(--container); margin: 0 auto; }
+
+    /* --- Top bar with title, actions & filters --- */
+    .board-header{
+      position: sticky; top: 0; z-index: 5;
+      background: linear-gradient(180deg,rgba(15,18,22,.85),rgba(15,18,22,0));
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid rgba(31,40,51,.35);
+      padding-bottom: 14px; margin-bottom: 18px;
+    }
+    .top-row{
+      display:grid; grid-template-columns: 1fr auto; gap: 1rem; align-items:center;
+      margin-bottom: .8rem;
+    }
+    #boardTitle{ margin:0; font-size:1.5rem; font-weight:800; }
+    .actions{ display:flex; gap:.6rem; flex-wrap: wrap; }
+    #newTaskBtn, #newColumnBtn, #leaveBoardBtn{
+      display:inline-flex; align-items:center; gap:.35rem;
+      padding:.6rem 1rem; border-radius:10px; color:#fff; border:1px solid #3a4fd3;
+      background: linear-gradient(180deg,var(--primary),var(--primary-700));
+      box-shadow:0 10px 22px rgba(94,23,235,.18); cursor:pointer;
+      transition: transform .14s ease, filter .14s ease;
+    }
+    #newTaskBtn:hover, #newColumnBtn:hover{ transform: translateY(-2px); filter:brightness(1.05); }
+    #leaveBoardBtn{ border-color:#5b1f24; background: linear-gradient(180deg,#2a1313,#1e0e0e); }
+    #leaveBoardBtn:hover{ filter: brightness(1.05); }
+
+    .filter-panel{
+      display:grid; grid-template-columns: repeat(5, minmax(0,1fr)) auto;
+      gap:.6rem; align-items:center;
+      background: linear-gradient(180deg,#131922,#10161e);
+      border:1px solid var(--border);
+      border-radius: 12px;
+      padding: .8rem;
+      margin-top: .6rem;
+    }
+    .filter-panel select, .filter-panel input[type="date"]{
+      width:100%; padding:.55rem .7rem; border-radius:10px; color:var(--text);
+      background:#0f141a; border:1px solid var(--border);
+      transition: border-color .18s ease, box-shadow .18s ease;
+    }
+    .filter-panel select:focus, .filter-panel input[type="date"]:focus{
+      outline:none; border-color: var(--primary-700); box-shadow: 0 0 0 4px var(--ring);
+    }
+    #clearFiltersBtn{
+      padding:.55rem .9rem; border-radius:10px; color:var(--text);
+      background: linear-gradient(180deg,#1a2230,#151c27);
+      border:1px solid #2a3341; cursor:pointer;
+    }
+
+    /* --- Columns --- */
+    .columns-container{ overflow-x:auto; padding: 1rem 0; }
+    .columns{ display:flex; gap:1.1rem; min-width:fit-content; }
+
+    /* Sticky column headers are already styled in CSS; just ensure look matches */
+    .column{
+      min-width: 300px;
+      background: linear-gradient(180deg,#161b23,#121720);
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      padding: .9rem;
+      box-shadow: var(--shadow);
+      transition: transform .18s ease, border-color .18s ease;
+    }
+    .column:hover{ transform: translateY(-2px); border-color:#2a3645; }
+    .column h2{
+      margin:0 0 .6rem; display:flex; justify-content:space-between; align-items:center;
+      font-size:1.05rem; font-weight:800;
+    }
+    .column-controls{ display:flex; gap:6px; }
+    .column-controls button{
+      padding:4px 6px; font-size:14px; border-radius:8px; cursor:pointer;
+      background: linear-gradient(180deg,#1a2230,#151c27); color:var(--text);
+      border:1px solid #2a3341;
+    }
+
+    .card-list{ display:flex; flex-direction:column; gap:.7rem; }
+    .card{
+      background: linear-gradient(180deg,#1a2029,#161c24);
+      border:1px solid #222a35;
+      border-radius: 12px;
+      padding: .9rem;
+      box-shadow: 0 6px 20px rgba(0,0,0,.25);
+      cursor: grab;
+    }
+    .card:hover{ transform: translateY(-2px); }
+
+    .move-buttons{ display:flex; justify-content:flex-end; gap:.4rem; margin-top:.5rem; }
+    .move-buttons button{
+      background: linear-gradient(180deg,#202735,#1a202b);
+      border:1px solid #2a3341; color:var(--text);
+      padding:4px 10px; font-size:13px; border-radius:6px; cursor:pointer;
+    }
+
+    /* Notifications container (same look) */
+    .notification-container{
+      position:fixed; right:20px; top:20px; display:flex; flex-direction:column; gap:.6rem;
+      z-index:9999; pointer-events:none;
+    }
+    .notification{
+      pointer-events:auto; padding:.75rem 1rem; border-radius:12px;
+      border:1px solid var(--border);
+      background: linear-gradient(180deg,var(--panel),var(--panel-2));
+      color:var(--text); box-shadow: var(--shadow); font-weight:600;
+      animation: toastIn 180ms ease;
+    }
+    @keyframes toastIn{ from{opacity:0; transform:translateY(-6px);} to{opacity:1; transform:translateY(0);} }
+
+    @media (max-width: 1000px){
+      .top-row{ grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 
 <body>
-  <!-- Sidebar -->
-  <div class="sidebar">
-    <h2 class="sidebar-title">PM SYSTEM<br>PROTOTYPE1</h2>
-    <div class="sidebar-content">
-      <nav class="sidebar-nav">
-        <ul>
-          <li><a href="dashboard.html" class="sidebar-button">🏠 Dashboard</a></li>
-          <li><a href="employees.html" class="sidebar-button">👥 Employees</a></li>
-          <li><a href="chat.html" class="sidebar-button">💬 Chat</a></li>
-        </ul>
-      </nav>
+  <!-- Sidebar (synced with dashboard) -->
+  <aside class="sidebar" aria-label="Sidebar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div class="title">PM SYSTEM<br>PROTOTYPE1</div>
     </div>
-    <div class="sidebar-footer">
-      <button class="sidebar-button logout-button" onclick="logout()">🚪 Logout</button>
 
+    <nav class="sidebar-nav">
+      <ul>
+        <li class="nav-item">
+          <a href="dashboard.html" class="sidebar-button">
+            <span class="icon">🏠</span><span class="label">Dashboard</span>
+          </a>
+          <span class="tooltip">Dashboard</span>
+        </li>
+        <li class="nav-item">
+          <a href="employees.html" class="sidebar-button">
+            <span class="icon">👥</span><span class="label">Employees</span>
+          </a>
+          <span class="tooltip">Employees</span>
+        </li>
+        <li class="nav-item">
+          <a href="chat.html" class="sidebar-button">
+            <span class="icon">💬</span><span class="label">Chat</span>
+          </a>
+          <span class="tooltip">Chat</span>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="collapse-toggle" id="collapseToggle">⇔ Collapse</button>
+      <button id="logoutBtn" class="sidebar-button logout-button" onclick="logout()">
+        <span class="icon">🚪</span><span class="label">Logout</span>
+      </button>
     </div>
-  </div>
+  </aside>
 
   <!-- Main Board Area -->
   <main class="board">
-    <header class="board-header">
-      <section class="filter-panel">
-        <select id="filterAssignee">
-          <option value="">All Assignees</option>
-        </select>
-        <input type="date" id="filterDueDate" />
-        <select id="filterPriority">
-          <option value="">All Priorities</option>
-          <option>Low</option>
-          <option>Medium</option>
-          <option>High</option>
-        </select>
-        <select id="filterCategory">
-          <option value="">All Categories</option>
-          <option value="Coding">Coding</option>
-          <option value="Design">Design</option>
-          <option value="Marketing">Marketing</option>
-          <option value="Scripting">Scripting</option>
-          <option value="Animation">Animation</option>
-          <option value="Testing">Testing</option>
-          <option value="UI/UX">UI/UX</option>
-          <option value="Worldbuilding">Worldbuilding</option>
-          <option value="Narrative">Narrative</option>
-          <option value="Audio">Audio</option>
-          <option value="Community">Community</option>
-        </select>
-        <button id="clearFiltersBtn">Clear Filters</button>
-      </section>
-      <h1 id="boardTitle">Project Board</h1>
-      <button id="newTaskBtn">+ New Task</button>
-      <button id="newColumnBtn">+ New Column</button>
-      <button id="leaveBoardBtn" class="danger">🚪 Leave Board</button>
+    <div class="container">
+      <header class="board-header">
+        <div class="top-row">
+          <h1 id="boardTitle">Project Board</h1>
+          <div class="actions">
+            <button id="newTaskBtn">➕ New Task</button>
+            <button id="newColumnBtn">🗂 New Column</button>
+            <button id="leaveBoardBtn" class="danger">🚪 Leave Board</button>
+          </div>
+        </div>
 
-    </header>
+        <section class="filter-panel">
+          <select id="filterAssignee">
+            <option value="">All Assignees</option>
+          </select>
+          <input type="date" id="filterDueDate" />
+          <select id="filterPriority">
+            <option value="">All Priorities</option>
+            <option>Low</option>
+            <option>Medium</option>
+            <option>High</option>
+          </select>
+          <select id="filterCategory">
+            <option value="">All Categories</option>
+            <option value="Coding">Coding</option>
+            <option value="Design">Design</option>
+            <option value="Marketing">Marketing</option>
+            <option value="Scripting">Scripting</option>
+            <option value="Animation">Animation</option>
+            <option value="Testing">Testing</option>
+            <option value="UI/UX">UI/UX</option>
+            <option value="Worldbuilding">Worldbuilding</option>
+            <option value="Narrative">Narrative</option>
+            <option value="Audio">Audio</option>
+            <option value="Community">Community</option>
+          </select>
+          <button id="clearFiltersBtn">Clear Filters</button>
+        </section>
+      </header>
 
-    <div class="columns-container">
-      <div id="columns" class="columns"></div>
+      <div class="columns-container">
+        <div id="columns" class="columns"></div>
+      </div>
     </div>
   </main>
 
@@ -109,6 +337,7 @@
       </form>
     </div>
   </div>
+
   <!-- Leave Board Modal -->
   <div id="leaveBoardModal" class="modal">
     <div class="modal-content">
@@ -143,10 +372,29 @@
       'https://qqlsttamprrcljljcqrk.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxbHN0dGFtcHJyY2xqbGpjcXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTQ2NTcsImV4cCI6MjA2NDQzMDY1N30.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g'
     );
+
+    // Sidebar collapse toggle (persisted)
+    document.addEventListener("DOMContentLoaded", () => {
+      const toggle = document.getElementById('collapseToggle');
+      if (toggle) {
+        toggle.addEventListener('click', () => {
+          document.body.classList.toggle('sidebar-collapsed');
+          localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed') ? '1' : '0');
+        });
+      }
+      if (localStorage.getItem('sidebarCollapsed') === '1') {
+        document.body.classList.add('sidebar-collapsed');
+      }
+    });
   </script>
+
   <script src="js/board.js"></script>
+
+  <!-- Notification Container -->
+  <div id="notificationContainer" class="notification-container" aria-live="polite"></div>
+
+  <!-- Wire up the topbar buttons to your existing functions (no changes in board.js) -->
   <script>
-    // Clean inline onclick -> JS bindings
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("newColumnBtn").addEventListener("click", () => window.openNewColumnModal());
       document.getElementById("newTaskBtn").addEventListener("click", () => window.openTaskModal());
@@ -156,8 +404,5 @@
       document.getElementById("logoutBtn").addEventListener("click", () => logout());
     });
   </script>
-  <div id="notificationContainer" class="notification-container"></div>
-
 </body>
-
 </html>

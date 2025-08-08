@@ -33,17 +33,23 @@ function showConfirm(message, onConfirm) {
 }
 
 function logout() {
-  // Keep consistent with the rest of the app
   localStorage.removeItem("loggedInUser");
   window.location.href = "index.html";
 }
 
-/* ===== Employees ===== */
+/* ===== Permissions ===== */
+let canManage = false;         // computed at load
+let currentUser = null;        // { id, ... }
 
+/* ===== Employees state ===== */
 let allEmployees = [];
 let searchQuery = "";
 
+/* ===== CRUD with permission checks ===== */
+
 async function addEmployee() {
+  if (!canManage) return showNotification("You don’t have permission to add employees.", "error");
+
   const name = document.getElementById("emp-name").value.trim();
   const role = document.getElementById("emp-role").value.trim();
   const email = document.getElementById("emp-email").value.trim();
@@ -67,19 +73,58 @@ async function addEmployee() {
 
     showNotification("Employee added!", "success");
     document.getElementById("addEmployeeForm").reset();
-    await renderEmployees(); // refresh
+    await renderEmployees();
   } catch (e) {
     console.error(e);
     showNotification("Unexpected error while adding employee.", "error");
   }
 }
 
+async function editEmployee(id) {
+  if (!canManage) return showNotification("You don’t have permission to edit employees.", "error");
+
+  const emp = allEmployees.find((x) => String(x.id) === String(id));
+  if (!emp) return;
+
+  const newName = prompt("Name", emp.name || "");
+  if (newName === null) return;
+  const newRole = prompt("Role", emp.role || "");
+  if (newRole === null) return;
+  const newEmail = prompt("Email", emp.email || "");
+  if (newEmail === null) return;
+
+  const { error } = await supabase
+    .from("users")
+    .update({ name: newName.trim(), role: newRole.trim(), email: newEmail.trim() })
+    .eq("id", id);
+
+  if (error) {
+    showNotification("Error updating employee: " + error.message, "error");
+  } else {
+    showNotification("Employee updated.", "success");
+    await renderEmployees();
+  }
+}
+
+async function removeEmployee(id) {
+  if (!canManage) return showNotification("You don’t have permission to remove employees.", "error");
+
+  const { error } = await supabase.from("users").delete().eq("id", id);
+  if (error) {
+    showNotification("Error removing employee: " + error.message, "error");
+  } else {
+    showNotification("Employee removed successfully.", "success");
+    await renderEmployees();
+  }
+}
+
+/* ===== Render ===== */
+
 async function renderEmployees() {
   const tbody = document.getElementById("employeeList");
   const empty = document.getElementById("employeeEmpty");
   tbody.innerHTML = "";
 
-  // Fetch once; filter on client for snappy UX
   const { data: employees, error } = await supabase.from("users").select("*");
   if (error) {
     tbody.innerHTML = `<tr><td colspan="4">Error loading employees.</td></tr>`;
@@ -107,85 +152,95 @@ async function renderEmployees() {
 
   filtered.forEach((emp) => {
     const tr = document.createElement("tr");
+    const actionsCell = canManage
+      ? `
+        <div class="actions-cell">
+          <button class="icon-btn" title="Edit" data-action="edit" data-id="${emp.id}">✏️</button>
+          <button class="icon-btn" title="Remove" data-action="remove" data-id="${emp.id}">🗑</button>
+        </div>`
+      : ``; // view-only: no buttons
+
     tr.innerHTML = `
       <td>${emp.name || ""}</td>
       <td>${emp.role || ""}</td>
       <td>${emp.email || ""}</td>
-      <td>
-        <div class="actions-cell">
-          <button class="icon-btn" title="Edit" data-action="edit" data-id="${emp.id}">✏️</button>
-          <button class="icon-btn" title="Remove" data-action="remove" data-id="${emp.id}">🗑</button>
-        </div>
-      </td>
+      <td>${actionsCell}</td>
     `;
     tbody.appendChild(tr);
   });
 
-  // Wire actions
-  tbody.querySelectorAll("button.icon-btn").forEach((btn) => {
-    const id = btn.dataset.id;
-    const action = btn.dataset.action;
-    if (action === "remove") {
-      btn.addEventListener("click", () => {
-        const who = (allEmployees.find((x) => String(x.id) === String(id)) || {}).name || "this user";
-        showConfirm(`Remove ${who}?`, () => removeEmployee(id));
-      });
-    } else if (action === "edit") {
-      btn.addEventListener("click", () => editEmployee(id));
-    }
-  });
-}
-
-async function editEmployee(id) {
-  const emp = allEmployees.find((x) => String(x.id) === String(id));
-  if (!emp) return;
-
-  const newName = prompt("Name", emp.name || "");
-  if (newName === null) return;
-  const newRole = prompt("Role", emp.role || "");
-  if (newRole === null) return;
-  const newEmail = prompt("Email", emp.email || "");
-  if (newEmail === null) return;
-
-  const { error } = await supabase
-    .from("users")
-    .update({ name: newName.trim(), role: newRole.trim(), email: newEmail.trim() })
-    .eq("id", id);
-
-  if (error) {
-    showNotification("Error updating employee: " + error.message, "error");
-  } else {
-    showNotification("Employee updated.", "success");
-    await renderEmployees();
+  // Wire actions (if allowed)
+  if (canManage) {
+    tbody.querySelectorAll("button.icon-btn").forEach((btn) => {
+      const id = btn.dataset.id;
+      const action = btn.dataset.action;
+      if (action === "remove") {
+        btn.addEventListener("click", () => {
+          const who = (allEmployees.find((x) => String(x.id) === String(id)) || {}).name || "this user";
+          showConfirm(`Remove ${who}?`, () => removeEmployee(id));
+        });
+      } else if (action === "edit") {
+        btn.addEventListener("click", () => editEmployee(id));
+      }
+    });
   }
 }
 
-async function removeEmployee(id) {
-  const { error } = await supabase.from("users").delete().eq("id", id);
-  if (error) {
-    showNotification("Error removing employee: " + error.message, "error");
-  } else {
-    showNotification("Employee removed successfully.", "success");
-    await renderEmployees();
+/* ===== Permissions UI helpers ===== */
+
+function applyPermissionsUI() {
+  // Hide add form card for view-only users
+  const addForm = document.getElementById("addEmployeeForm");
+  if (addForm) {
+    const addSection = addForm.closest(".card");
+    if (addSection) addSection.style.display = canManage ? "" : "none";
   }
+
+  // Hide the Actions header if view-only
+  const actionsHeader = document.getElementById("actionsHeader");
+  if (actionsHeader) actionsHeader.style.display = canManage ? "" : "none";
 }
 
 /* ===== Init ===== */
-document.addEventListener("DOMContentLoaded", () => {
-  // Auth gate (same as other pages)
-  const user = JSON.parse(localStorage.getItem("loggedInUser"));
-  if (!user) {
+document.addEventListener("DOMContentLoaded", async () => {
+  // Auth gate
+  currentUser = JSON.parse(localStorage.getItem("loggedInUser"));
+  if (!currentUser) {
     showNotification("Not logged in.", "error");
     window.location.href = "index.html";
     return;
   }
 
-  renderEmployees();
+  try {
+    // Always fetch fresh to pick up is_manager (localStorage may not include it)
+    const { data: me, error: meErr } = await supabase
+      .from("users")
+      .select("id, is_manager")
+      .eq("id", currentUser.id)
+      .single();
 
-  document.getElementById("addEmployeeForm").addEventListener("submit", (e) => {
-    e.preventDefault();
-    addEmployee();
-  });
+    if (meErr) {
+      console.warn("Failed to fetch current user; defaulting to view-only.", meErr);
+      canManage = false;
+    } else {
+      canManage = !!me?.is_manager;
+    }
+  } catch (e) {
+    console.warn("User fetch error; defaulting to view-only.", e);
+    canManage = false;
+  }
+
+  applyPermissionsUI();
+  await renderEmployees();
+
+  // Form submit
+  const addForm = document.getElementById("addEmployeeForm");
+  if (addForm) {
+    addForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      addEmployee();
+    });
+  }
 
   // Live search with light debounce
   const searchInput = document.getElementById("employeeSearch");

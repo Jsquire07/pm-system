@@ -7,210 +7,246 @@
   <link rel="stylesheet" href="css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Scoped polish for dashboard-only UI pieces -->
+  <!-- Page-scoped layout polish -->
   <style>
     :root{
-      --ring: rgba(110,142,251,0.45);
-      --text: #e6edf3;
-      --muted:#9aa6b2;
+      --bg:#0f1216;
       --panel:#141a22;
       --panel-2:#11161d;
       --border:#1f2833;
+      --text:#e6edf3;
+      --muted:#9aa6b2;
+      --primary:#6e8efb;
+      --primary-700:#5c79e4;
+      --ring: rgba(110,142,251,0.45);
       --shadow: 0 14px 34px rgba(0,0,0,0.35);
+      --radius:14px;
+      --radius-sm:10px;
+      --sidebar-w: 260px;
+      --sidebar-w-collapsed: 86px;
+      --gap: 1.2rem;
     }
 
-    /* Sticky top header in the main area */
+    body { background: var(--bg); color: var(--text); }
+
+    /* ===== Sidebar (redesigned) ===== */
+    .sidebar {
+      position: fixed; top: 0; left: 0; height: 100vh;
+      width: var(--sidebar-w);
+      background: linear-gradient(180deg, #0e131a 0%, #0b1016 100%);
+      border-right: 1px solid var(--border);
+      display: grid; grid-template-rows: auto 1fr auto;
+      padding: 14px; gap: 12px;
+      transition: width 180ms ease;
+      z-index: 100;
+    }
+    body.sidebar-collapsed .sidebar { width: var(--sidebar-w-collapsed); }
+
+    .brand {
+      display: flex; align-items: center; gap: 12px; padding: 8px 10px;
+      border-radius: 12px; background: linear-gradient(180deg, #141a22, #11161d);
+      border: 1px solid var(--border);
+    }
+    .brand .logo { width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(180deg, var(--primary), var(--primary-700)); box-shadow: 0 8px 20px rgba(94,23,235,0.28); }
+    .brand .title { font-weight: 800; letter-spacing: .2px; line-height: 1.1; }
+    body.sidebar-collapsed .brand .title { display: none; }
+
+    .sidebar-nav ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+    .nav-item { position: relative; }
+    .sidebar-button {
+      display: flex; align-items: center; gap: 10px;
+      width: 100%; padding: 10px 12px;
+      border-radius: 12px; border: 1px solid #1b2430;
+      background: linear-gradient(180deg, #1a2230, #141b26);
+      color: var(--text); text-decoration: none; cursor: pointer;
+      transition: transform .14s ease, border-color .14s ease, background .14s ease;
+    }
+    .sidebar-button:hover { transform: translateY(-1px); border-color: #2a3645; }
+    .sidebar-button.active {
+      background: linear-gradient(180deg, rgba(110,142,251,0.18), rgba(34,211,238,0.14));
+      border-color: #3353ff4d;
+    }
+    .sidebar-button .icon { width: 22px; display: inline-grid; place-items: center; font-size: 18px; }
+    .sidebar-button .label { white-space: nowrap; }
+    body.sidebar-collapsed .sidebar-button .label { display: none; }
+
+    /* Tooltip when collapsed */
+    .nav-item .tooltip {
+      position: absolute; left: calc(100% + 10px); top: 50%; transform: translateY(-50%);
+      background: #0f141a; border: 1px solid var(--border);
+      color: var(--text); padding: 6px 10px; border-radius: 8px; font-size: 12px;
+      white-space: nowrap; box-shadow: var(--shadow); display: none;
+    }
+    body.sidebar-collapsed .nav-item:hover .tooltip { display: block; }
+
+    .sidebar-footer {
+      display: grid; gap: 10px;
+    }
+    .collapse-toggle {
+      background: transparent; border: 1px solid #243243; color: var(--text);
+      border-radius: 10px; padding: 8px 10px; cursor: pointer;
+    }
+    .logout-button { border: 1px solid #3b1b1b; background: linear-gradient(180deg, #2a1313, #1e0e0e); }
+    .logout-button:hover { border-color: #572525; }
+
+    /* ===== Main layout ===== */
+    .dashboard {
+      margin-left: var(--sidebar-w);
+      padding: 24px;
+      transition: margin-left 180ms ease;
+      min-height: 100vh;
+    }
+    body.sidebar-collapsed .dashboard { margin-left: var(--sidebar-w-collapsed); }
+
+    /* Top header */
     .dashboard-header {
-      position: sticky;
-      top: 0;
-      z-index: 5;
-      padding: 0 0 1rem 0;
+      position: sticky; top: 0; z-index: 5;
+      padding-bottom: 14px; margin-bottom: 18px;
       background: linear-gradient(180deg, rgba(15,18,22,0.85), rgba(15,18,22,0));
       backdrop-filter: blur(6px);
       border-bottom: 1px solid rgba(31,40,51,0.35);
     }
-
-    .dashboard-header h1 {
-      margin: 0 0 .8rem 0;
-      font-weight: 800;
-      letter-spacing: .2px;
+    .header-row {
+      display: grid; grid-template-columns: 1fr auto; gap: var(--gap); align-items: center;
     }
-
-    .board-controls {
-      display: flex;
-      gap: .6rem;
-      flex-wrap: wrap;
-      align-items: center;
+    #welcomeMessage { margin: 0; font-size: 1.6rem; font-weight: 800; }
+    .board-controls { display: flex; gap: .6rem; }
+    .board-controls .button {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .6rem 1rem; border-radius: 10px;
+      background: linear-gradient(180deg, var(--primary), var(--primary-700));
+      color: #fff; text-decoration: none; border: 1px solid #3a4fd3;
+      box-shadow: 0 10px 22px rgba(94,23,235,0.18);
+      transition: transform .14s ease, filter .14s ease;
     }
+    .board-controls .button:hover { transform: translateY(-2px); filter: brightness(1.05); }
 
-    /* Search bar + results */
-    .search-bar {
-      position: relative;
-      width: 100%;
-      margin-top: 1rem;
-    }
+    /* Search */
+    .search-bar { margin-top: 12px; position: relative; }
     #dashboardSearch {
-      width: 100%;
-      padding: .85rem 1rem;
-      border-radius: 12px;
-      background: #0f141a;
-      border: 1px solid var(--border);
-      color: var(--text);
-      outline: none;
-      transition: border-color 180ms ease, box-shadow 180ms ease;
+      width: 100%; padding: .9rem 1rem; border-radius: 12px;
+      background: #0f141a; border: 1px solid var(--border); color: var(--text);
+      outline: none; transition: border-color 180ms ease, box-shadow 180ms ease;
     }
-    #dashboardSearch:focus {
-      border-color: #5c79e4;
-      box-shadow: 0 0 0 4px var(--ring);
-    }
-
+    #dashboardSearch:focus { border-color: var(--primary-700); box-shadow: 0 0 0 4px var(--ring); }
     .search-results {
-      position: absolute;
-      left: 0; right: 0; top: calc(100% + 8px);
-      display: none;
-      background: linear-gradient(180deg, var(--panel), var(--panel-2));
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      max-height: 420px;
-      overflow-y: auto;
-      padding: .4rem 0;
+      position: absolute; left: 0; right: 0; top: calc(100% + 8px);
+      display: none; background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow);
+      overflow: hidden; max-height: 420px; overflow-y: auto; padding: .4rem 0;
     }
-    .search-results > div {
-      padding: .7rem 1rem;
-      cursor: pointer;
-      color: var(--text);
-      transition: background 150ms ease;
-    }
-    .search-results > div:hover {
-      background: #0f141a;
-    }
+    .search-results > div { padding: .7rem 1rem; cursor: pointer; transition: background .14s ease; }
+    .search-results > div:hover { background: #0f141a; }
 
-    /* Boards section */
-    .boards-section h2 {
-      margin: 1.2rem 0 .6rem 0;
-      font-size: 1.2rem;
-      font-weight: 800;
-    }
+    /* Boards */
+    .boards-section { margin-top: 8px; }
+    .boards-section h2 { margin: 1rem 0 .4rem; font-size: 1.2rem; font-weight: 800; }
 
-    /* Board cards look slick regardless of inline background color set by JS */
+    .boards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: var(--gap);
+      margin-top: .6rem;
+    }
     .boards-grid .card {
-      position: relative;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
+      position: relative; border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1rem 1.1rem 1.1rem;
+      box-shadow: var(--shadow); overflow: hidden;
       transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
       background-clip: padding-box;
+      min-height: 160px;
     }
     .boards-grid .card::before {
-      /* Subtle inner gradient so even bright theme colors remain readable */
-      content: "";
-      position: absolute; inset: 0;
-      background: linear-gradient(180deg, rgba(0,0,0,0.28), rgba(0,0,0,0.42));
+      content: ""; position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.28), rgba(0,0,0,0.44));
       pointer-events: none;
     }
-    .boards-grid .card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 18px 40px rgba(0,0,0,0.45);
-      border-color: #2a3645;
-    }
+    .boards-grid .card:hover { transform: translateY(-4px); box-shadow: 0 18px 40px rgba(0,0,0,0.45); border-color: #2a3645; }
     .boards-grid .card h2,
     .boards-grid .card p,
     .boards-grid .card code,
-    .boards-grid .card a {
-      position: relative; /* appear above ::before overlay */
-      z-index: 1;
-    }
-    .boards-grid .card h2 { margin-top: 0; }
-    .boards-grid .card code {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      padding: 2px 6px;
-      border-radius: 6px;
-      background: rgba(15,20,26,0.55);
-      border: 1px solid rgba(31,40,51,0.65);
-      color: #c8d3e0;
-    }
+    .boards-grid .card a { position: relative; z-index: 1; }
+    .boards-grid .card h2 { margin: 0 0 .4rem 0; }
+    .boards-grid .card .board-description { color: var(--muted); margin-bottom: .5rem; }
+    .boards-grid .card .button { margin-top: .5rem; }
 
-    /* Copy code button inline style */
     .copy-code-btn {
-      margin-left: .5rem;
-      border: 1px solid rgba(58,79,211,0.5);
-      background: linear-gradient(180deg, #1a2230, #151c27);
-      color: var(--text);
-      border-radius: 8px;
-      padding: 4px 10px;
-      cursor: pointer;
+      margin-left: .5rem; border: 1px solid rgba(58,79,211,0.5);
+      background: linear-gradient(180deg, #1a2230, #151c27); color: var(--text);
+      border-radius: 8px; padding: 4px 10px; cursor: pointer;
       transition: transform .14s ease, border-color .14s ease;
     }
-    .copy-code-btn:hover {
-      transform: translateY(-1px);
-      border-color: #5c79e4;
-    }
+    .copy-code-btn:hover { transform: translateY(-1px); border-color: #5c79e4; }
 
-    /* Notifications (top-right toasts) */
+    /* Notifications */
     .notification-container {
-      position: fixed;
-      right: 20px;
-      top: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: .6rem;
-      z-index: 9999;
-      pointer-events: none;
+      position: fixed; right: 20px; top: 20px; display: flex; flex-direction: column;
+      gap: .6rem; z-index: 9999; pointer-events: none;
     }
     .notification {
-      pointer-events: auto;
-      padding: .75rem 1rem;
-      border-radius: 12px;
+      pointer-events: auto; padding: .75rem 1rem; border-radius: 12px;
       border: 1px solid var(--border);
       background: linear-gradient(180deg, var(--panel), var(--panel-2));
-      color: var(--text);
-      box-shadow: var(--shadow);
+      color: var(--text); box-shadow: var(--shadow); font-weight: 600;
       animation: toastIn 180ms ease;
-      font-weight: 600;
     }
     .notification.success { border-color: rgba(34,197,94,0.4); }
     .notification.error   { border-color: rgba(239,68,68,0.45); }
     @keyframes toastIn { from { opacity: 0; transform: translateY(-6px);} to { opacity: 1; transform: translateY(0);} }
 
-    /* Make main area comfy */
-    .dashboard {
-      padding-top: 1.25rem;
-    }
-
-    @media (max-width: 768px) {
-      .board-controls { width: 100%; }
+    @media (max-width: 920px) {
+      .header-row { grid-template-columns: 1fr; }
+      .board-controls { justify-content: flex-start; }
     }
   </style>
 </head>
+
 <body>
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <h2 class="sidebar-title">PM SYSTEM<br>PROTOTYPE1</h2>
-    <div class="sidebar-content">
-      <nav class="sidebar-nav">
-        <ul>
-          <li><a class="sidebar-button active">🏠 Dashboard</a></li>
-          <li><a href="employees.html" class="sidebar-button">👥 Employees</a></li>
-          <li><a href="chat.html" class="sidebar-button">💬 Chat</a></li>
-        </ul>
-      </nav>
+  <!-- Redesigned Sidebar -->
+  <aside class="sidebar" aria-label="Sidebar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div class="title">PM SYSTEM<br>PROTOTYPE1</div>
     </div>
+
+    <nav class="sidebar-nav">
+      <ul>
+        <li class="nav-item">
+          <a class="sidebar-button active">
+            <span class="icon">🏠</span><span class="label">Dashboard</span>
+          </a>
+          <span class="tooltip">Dashboard</span>
+        </li>
+        <li class="nav-item">
+          <a href="employees.html" class="sidebar-button">
+            <span class="icon">👥</span><span class="label">Employees</span>
+          </a>
+          <span class="tooltip">Employees</span>
+        </li>
+        <li class="nav-item">
+          <a href="chat.html" class="sidebar-button">
+            <span class="icon">💬</span><span class="label">Chat</span>
+          </a>
+          <span class="tooltip">Chat</span>
+        </li>
+      </ul>
+    </nav>
+
     <div class="sidebar-footer">
-      <button class="sidebar-button logout-button" onclick="logout()">🚪 Logout</button>
+      <button class="collapse-toggle" id="collapseToggle">⇔ Collapse</button>
+      <button class="sidebar-button logout-button" onclick="logout()">🚪 <span class="label">Logout</span></button>
     </div>
   </aside>
 
   <!-- Main Content -->
   <main class="dashboard" role="main">
     <header class="dashboard-header">
-      <h1 id="welcomeMessage">Welcome!</h1>
-
-      <div class="board-controls" aria-label="Board Actions">
-        <a href="create_board.html" class="button">➕ Create Board</a>
-        <a href="join_board.html" class="button">🔗 Join Board</a>
+      <div class="header-row">
+        <h1 id="welcomeMessage">Welcome!</h1>
+        <div class="board-controls" aria-label="Board Actions">
+          <a href="create_board.html" class="button">➕ Create Board</a>
+          <a href="join_board.html" class="button">🔗 Join Board</a>
+        </div>
       </div>
 
       <div class="search-bar">
@@ -234,7 +270,20 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxbHN0dGFtcHJyY2xqbGpjcXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTQ2NTcsImV4cCI6MjA2NDQzMDY1N30.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g'
     );
     window.supabase = supabase; // ✅ Ensure global access
+
+    // Collapse toggle (no changes to your existing JS)
+    document.getElementById('collapseToggle').addEventListener('click', () => {
+      document.body.classList.toggle('sidebar-collapsed');
+      // Persist preference locally (optional)
+      localStorage.setItem('sidebarCollapsed', document.body.classList.contains('sidebar-collapsed') ? '1' : '0');
+    });
+
+    // Restore preference
+    if (localStorage.getItem('sidebarCollapsed') === '1') {
+      document.body.classList.add('sidebar-collapsed');
+    }
   </script>
+
   <script src="js/dashboard.js"></script>
 
   <!-- Notification Container -->

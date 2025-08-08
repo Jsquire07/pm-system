@@ -12,10 +12,18 @@ const categoryEl = document.getElementById("category");
 
 let issue = null;
 
-(async function loadIssue() {
-  const { data, error } = await supabase.from("tasks").select("*").eq("id", issueId).single();
+function toast(msg, type = "info") {
+  const container = document.getElementById("notificationContainer");
+  if (!container) return alert(msg);
+  const n = document.createElement("div");
+  n.className = `notification ${type}`;
+  n.textContent = msg;
+  container.appendChild(n);
+  setTimeout(() => n.remove(), 3200);
+}
 
-  if (error || !data) {
+(async function loadIssue() {
+  if (!issueId) {
     document.querySelector(".issue-view").innerHTML = `
       <h2>Issue not found</h2>
       <p><a href="board.html">Return to board</a></p>
@@ -23,19 +31,37 @@ let issue = null;
     return;
   }
 
+  // Fetch the task
+  const { data, error } = await supabase.from("tasks").select("*").eq("id", issueId).single();
+  if (error || !data) {
+    document.querySelector(".issue-view").innerHTML = `
+      <h2>Issue not found</h2>
+      <p><a href="board.html">Return to board</a></p>
+    `;
+    return;
+  }
   issue = data;
 
   titleEl.innerText = issue.title || "(Untitled)";
-  statusEl.innerText = issue.status || "(Unknown)";
+
+  // Display human status (column name) if possible
+  let statusText = issue.status || "(Unknown)";
+  try {
+    const { data: col } = await supabase.from("columns").select("name").eq("id", issue.status).single();
+    if (col && col.name) statusText = col.name;
+  } catch (_) {}
+  statusEl.innerText = statusText;
+
   descriptionEl.value = issue.description || "";
   priorityEl.value = issue.priority || "Medium";
   dueDateEl.value = issue.dueDate || "";
   dueTimeEl.value = issue.dueTime || "";
   categoryEl.value = issue.category || "";
 
+  // Assignees
   const { data: employees } = await supabase.from("users").select("*");
   assigneeEl.innerHTML = `<option value="">Unassigned</option>`;
-  employees.forEach(emp => {
+  (employees || []).forEach(emp => {
     const opt = document.createElement("option");
     opt.value = emp.name;
     opt.textContent = emp.name;
@@ -47,25 +73,39 @@ let issue = null;
 async function saveIssueChanges() {
   const updatedTask = {
     description: descriptionEl.value,
-    assignee: assigneeEl.value,
-    priority: priorityEl.value,
-    dueDate: dueDateEl.value,
-    dueTime: dueTimeEl.value,
-    category: categoryEl.value
+    assignee: assigneeEl.value || null,
+    priority: priorityEl.value || null,
+    dueDate: dueDateEl.value || null,
+    dueTime: dueTimeEl.value || null,
+    category: categoryEl.value || null
   };
 
+  const btns = document.querySelectorAll('.actions button');
+  btns.forEach(b => b.disabled = true);
+
   const { error } = await supabase.from("tasks").update(updatedTask).eq("id", issueId);
-  if (error) return alert("Error saving issue: " + error.message);
-  alert("Changes saved!");
+
+  btns.forEach(b => b.disabled = false);
+
+  if (error) {
+    console.error(error);
+    return toast("Error saving issue", "error");
+  }
+  toast("Changes saved", "success");
 }
 
 async function deleteIssue() {
   if (!confirm("Are you sure you want to delete this issue?")) return;
   const { error } = await supabase.from("tasks").delete().eq("id", issueId);
-  if (error) return alert("Error deleting issue: " + error.message);
-  window.location.href = "board.html";
+  if (error) {
+    console.error(error);
+    return toast("Error deleting issue", "error");
+  }
+  toast("Issue deleted", "success");
+  setTimeout(() => (window.location.href = "board.html"), 400);
 }
 
+// Keep category colors util if you need it elsewhere
 function getColorForCategory(category) {
   switch (category) {
     case "Coding": return "#d0e7ff";
@@ -84,6 +124,7 @@ function getColorForCategory(category) {
 }
 
 function logout() {
-  localStorage.removeItem("currentUser");
+  // Align with the rest of the app (login stores 'loggedInUser')
+  localStorage.removeItem("loggedInUser");
   window.location.href = "index.html";
 }

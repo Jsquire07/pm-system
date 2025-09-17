@@ -13,43 +13,69 @@ app.use(express.json());
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY // only server has this
 );
 
-// Register new user
-app.post("/api/register", async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
+const JWT_SECRET = process.env.JWT_SECRET || "super-secret";
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ error: "Missing fields" });
+// Helper: validate email format
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+// 🔹 REGISTER
+app.post("/api/register", async (req, res) => {
+  const { name, email, password } = req.body;
+
+  // 1. Server-side validation
+  if (!name || name.length < 2) return res.status(400).json({ error: "Invalid name" });
+  if (!isValidEmail(email)) return res.status(400).json({ error: "Invalid email" });
+  if (!password || password.length < 8)
+    return res.status(400).json({ error: "Password must be at least 8 chars" });
+
+  try {
+    // 2. Check if email already exists
+    const { data: existing } = await supabase
+      .from("users")
+      .select("id")
+      .eq("email", email)
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      return res.status(400).json({ error: "Email already registered" });
     }
 
-    // hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // 3. Hash password securely
+    const hashedPassword = await bcrypt.hash(password, 12);
 
-    // insert user
-    const { error } = await supabase.from("users").insert([
-      { name, email, password: hashedPassword }
-    ]);
+    // 4. Insert user into database
+    const { data, error } = await supabase
+      .from("users")
+      .insert([{ name, email, password: hashedPassword }])
+      .select("id, name, email")
+      .single();
 
     if (error) return res.status(400).json({ error: error.message });
 
-    res.json({ message: "Account created successfully" });
+    res.json({ message: "Account created", user: data });
   } catch (err) {
     res.status(500).json({ error: "Server error" });
   }
 });
 
-// Login
+// 🔹 LOGIN
 app.post("/api/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
-    // fetch user by email
+  // 1. Validation
+  if (!isValidEmail(email)) return res.status(400).json({ error: "Invalid email" });
+  if (!password) return res.status(400).json({ error: "Password required" });
+
+  try {
+    // 2. Fetch user
     const { data: users, error } = await supabase
       .from("users")
-      .select("*")
+      .select("id, name, email, password")
       .eq("email", email)
       .limit(1);
 
@@ -59,23 +85,47 @@ app.post("/api/login", async (req, res) => {
 
     const user = users[0];
 
-    // check password
+    // 3. Check password
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(401).json({ error: "Invalid credentials" });
 
-    // create token
+    // 4. Issue JWT
     const token = jwt.sign(
       { id: user.id, email: user.email, name: user.name },
-      process.env.JWT_SECRET,
+      JWT_SECRET,
       { expiresIn: "2h" }
     );
 
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email } });
+    res.json({
+      message: "Login successful",
+      token,
+      user: { id: user.id, name: user.name, email: user.email }
+    });
   } catch (err) {
     res.status(500).json({ error: "Server error" });
   }
 });
 
+// 🔹 Middleware to protect routes
+function authMiddleware(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: "Missing token" });
+
+  const token = authHeader.split(" ")[1];
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded; // attach user info
+    next();
+  } catch (err) {
+    return res.status(403).json({ error: "Invalid or expired token" });
+  }
+}
+
+// 🔹 Example protected route
+app.get("/api/me", authMiddleware, (req, res) => {
+  res.json({ user: req.user });
+});
+
 // Start server
 const PORT = 5000;
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`✅ Secure server running on http://localhost:${PORT}`));

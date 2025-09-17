@@ -179,7 +179,9 @@ function showNotification(message, type = "info") {
   }, 3000);
 }
 
-function logout() {
-  localStorage.removeItem("loggedInUser");
+async function logout() {
+  await supabase.auth.signOut();
+  localStorage.clear();
   window.location.href = "index.html";
 }
+

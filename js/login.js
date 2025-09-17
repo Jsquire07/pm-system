@@ -32,35 +32,44 @@ document.addEventListener("DOMContentLoaded", () => {
     const name = nameInput.value.trim();
 
     try {
-      // Decide endpoint
-      let endpoint = creatingAccount ? "/api/register" : "/api/login";
-      let payload = creatingAccount ? { name, email, password } : { email, password };
+      if (creatingAccount) {
+        // ✅ Register with Supabase Auth
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { name } // store custom user metadata
+          }
+        });
 
-      const res = await fetch("http://localhost:5000" + endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+        if (error) {
+          errorMsg.textContent = error.message;
+          return;
+        }
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        errorMsg.textContent = data.error || "Something went wrong";
-        return;
-      }
-
-      if (data.token) {
-        // Store JWT + user safely
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("loggedInUser", JSON.stringify(data.user));
-        window.location.href = "dashboard.html";
+        errorMsg.textContent = "Account created! Please check your email to confirm.";
+        toggleMode(); // go back to login mode
       } else {
-        // Show server message
-        errorMsg.textContent = data.message;
-        if (creatingAccount) toggleMode();
+        // ✅ Login with Supabase Auth
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        if (error) {
+          errorMsg.textContent = "Invalid email or password.";
+          return;
+        }
+
+        // Store session in localStorage
+        localStorage.setItem("token", data.session.access_token);
+        localStorage.setItem("loggedInUser", JSON.stringify(data.user));
+
+        // Redirect
+        window.location.href = "dashboard.html";
       }
     } catch (err) {
-      errorMsg.textContent = "Server unreachable.";
+      errorMsg.textContent = "Something went wrong.";
     }
   });
 });

@@ -1,7 +1,7 @@
 // chat.js — realtime, right-aligned "mine" bubbles, same hooks
 
-const supabaseClient = window.supabase.createClient(
-  'https://qqlsttamprrcljljcqrk.supabase.co',
+const supabase = window.supabase.createClient(
+  "https://qqlsttamprrcljljcqrk.supabase.co",
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxbHN0dGFtcHJyY2xqbGpjcXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTQ2NTcsImV4cCI6MjA2NDQzMDY1N30.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g'
 );
 

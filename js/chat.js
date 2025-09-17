@@ -20,7 +20,7 @@ const userColors = {};
 
 function escapeHtml(s) {
   return s.replace(/[&<>"']/g, c => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[c]));
 }
 
@@ -34,7 +34,7 @@ function getUserColor(name) {
 }
 
 async function loadMessages(initial = false) {
-  const { data, error } = await supabaseClient
+  const { data, error } = await supabase
     .from("messages")
     .select("*")
     .order("id", { ascending: true });
@@ -46,7 +46,7 @@ async function loadMessages(initial = false) {
 
   if (initial) chatBox.innerHTML = "";
 
-  data.forEach((msg) => {
+  data.forEach(msg => {
     if (msg.id > lastMessageId) {
       appendMessage(msg);
       lastMessageId = msg.id;
@@ -57,12 +57,12 @@ async function loadMessages(initial = false) {
 }
 
 function appendMessage({ id, username, text, created_at }) {
-  // Avoid duplicate DOM if realtime + initial fetch overlap
   if (chatBox.querySelector(`.message[data-id="${id}"]`)) return;
 
-  const div = document.createElement("div");
   const author = username || "Unknown";
   const mine = author === currentUsername;
+
+  const div = document.createElement("div");
   div.className = `message${mine ? " mine" : ""}`;
   div.dataset.id = id;
 
@@ -106,18 +106,19 @@ function removeMessageFromDom(id) {
   if (el) el.remove();
 }
 
-function editMessage(id, oldText) {
+async function editMessage(id, oldText) {
   const newText = prompt("Edit your message:", oldText);
   if (newText && newText !== oldText) {
-    supabaseClient.from("messages").update({ text: newText }).eq("id", id);
+    const { error } = await supabase.from("messages").update({ text: newText }).eq("id", id);
+    if (error) console.error("Edit error:", error);
   }
 }
 
-function deleteMessage(id, element) {
+async function deleteMessage(id, element) {
   if (confirm("Delete this message?")) {
-    supabaseClient.from("messages").delete().eq("id", id);
-    // DOM will also update via realtime; remove immediately for snappier UX
-    element.remove();
+    const { error } = await supabase.from("messages").delete().eq("id", id);
+    if (error) console.error("Delete error:", error);
+    else element.remove();
   }
 }
 
@@ -126,7 +127,7 @@ chatForm.addEventListener("submit", async (e) => {
   const message = chatInput.value.trim();
   if (!message) return;
 
-  const { error } = await supabaseClient.from("messages").insert([
+  const { error } = await supabase.from("messages").insert([
     { username: currentUsername, text: message }
   ]);
 
@@ -141,7 +142,6 @@ chatForm.addEventListener("submit", async (e) => {
 });
 
 chatInput.addEventListener("input", () => {
-  // Keep the indicator subtle; just show "typing…" locally
   typingIndicator.textContent = "Typing…";
   clearTimeout(typingTimeout);
   typingTimeout = setTimeout(() => (typingIndicator.textContent = ""), 1000);
@@ -160,35 +160,25 @@ function logout() {
   window.location.href = "index.html";
 }
 
-
 document.addEventListener("DOMContentLoaded", async () => {
   await loadMessages(true);
 
-  // Prefer realtime; fall back gracefully if not available
-  try {
-    const channel = supabaseClient
-      .channel("messages-stream")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages" },
-        (payload) => {
-          appendMessage(payload.new);
-          scrollToBottom();
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "messages" },
-        (payload) => updateMessageInDom(payload.new.id, payload.new.text)
-      )
-      .on(
-        "postgres_changes",
-        { event: "DELETE", schema: "public", table: "messages" },
-        (payload) => removeMessageFromDom(payload.old.id)
-      )
-      .subscribe();
-  } catch (e) {
-    console.warn("Realtime not available; staying on manual load.", e);
-    setInterval(() => loadMessages(false), 1000);
-  }
+  supabase
+    .channel("messages-stream")
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, (payload) => {
+      appendMessage(payload.new);
+      scrollToBottom();
+    })
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "messages" }, (payload) => {
+      updateMessageInDom(payload.new.id, payload.new.text);
+    })
+    .on("postgres_changes", { event: "DELETE", schema: "public", table: "messages" }, (payload) => {
+      removeMessageFromDom(payload.old.id);
+    })
+    .subscribe((status) => {
+      if (status !== "SUBSCRIBED") {
+        console.warn("Realtime not available, falling back to polling.");
+        setInterval(() => loadMessages(false), 2000);
+      }
+    });
 });

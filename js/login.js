@@ -38,59 +38,37 @@ form.addEventListener("submit", async (e) => {
   errorMsg.textContent = "";
 
   const email = emailInput.value.trim();
-  const inputPassword = passwordInput.value;
+  const password = passwordInput.value;
+  const name = nameInput.value.trim();
 
-  if (creatingAccount) {
-    const name = nameInput.value.trim();
-    if (!name) {
-      errorMsg.textContent = "Please enter your name.";
+  try {
+    let endpoint = creatingAccount ? "/api/register" : "/api/login";
+    let payload = creatingAccount
+      ? { name, email, password }
+      : { email, password };
+
+    const res = await fetch("http://localhost:5000" + endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      errorMsg.textContent = data.error || "Something went wrong";
       return;
     }
 
-    const hashedPassword = await dcodeIO.bcrypt.hash(inputPassword, 10);
-    const { error: insertError } = await supabase.from("users").insert([
-      { name, email, password: hashedPassword }
-    ]);
-
-    if (insertError) {
-      errorMsg.textContent = "Failed to create account. Email may already exist.";
-      return;
+    if (data.token) {
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("loggedInUser", JSON.stringify(data.user));
+      window.location.href = "dashboard.html";
+    } else {
+      errorMsg.textContent = data.message;
+      if (creatingAccount) toggleMode(); // flip back to login mode
     }
-
-    const { data, error: fetchError } = await supabase
-      .from("users")
-      .select("*")
-      .eq("email", email);
-
-    if (fetchError || !data || data.length === 0) {
-      errorMsg.textContent = "Error retrieving account.";
-      return;
-    }
-
-    const user = data[0];
-    localStorage.setItem("loggedInUser", JSON.stringify(user));
-    window.location.href = "dashboard.html";
-    return;
+  } catch (err) {
+    errorMsg.textContent = "Server unreachable.";
   }
-
-  const { data, error } = await supabase
-    .from("users")
-    .select("id, email, name, password")
-    .eq("email", email);
-
-  if (error || !data || data.length === 0) {
-    errorMsg.textContent = "Invalid credentials.";
-    return;
-  }
-
-  const user = data[0];
-  const passwordMatch = await dcodeIO.bcrypt.compare(inputPassword, user.password);
-
-  if (!passwordMatch) {
-    errorMsg.textContent = "Invalid credentials.";
-    return;
-  }
-
-  localStorage.setItem("loggedInUser", JSON.stringify(user));
-  window.location.href = "dashboard.html";
 });

@@ -1,75 +1,96 @@
-// js/login.js
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.getElementById("loginForm");
-  const emailInput = document.getElementById("login-email");
-  const passwordInput = document.getElementById("login-password");
-  const nameInput = document.getElementById("register-name");
-  const registerFields = document.getElementById("registerFields");
-  const toggleLink = document.getElementById("toggleLink");
-  const errorMsg = document.getElementById("login-error");
-  const formTitle = document.getElementById("formTitle");
-  const loginBtn = document.getElementById("loginBtn");
+// login.js
+const supabase = window.supabase.createClient(
+  "https://qqlsttamprrcljljcqrk.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxbHN0dGFtcHJyY2xqbGpjcXJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg4NTQ2NTcsImV4cCI6MjA2NDQzMDY1N30.spAzwuJkcbU8WfgTYsivEC_TT1VTji7YGAEfIeh-44g"
+);
 
-  let creatingAccount = false;
+const form = document.getElementById("loginForm");
+const emailInput = document.getElementById("login-email");
+const passwordInput = document.getElementById("login-password");
+const nameInput = document.getElementById("register-name");
+const registerFields = document.getElementById("registerFields");
+const toggleLink = document.getElementById("toggleLink");
+const errorMsg = document.getElementById("login-error");
+const formTitle = document.getElementById("formTitle");
+const loginBtn = document.getElementById("loginBtn");
 
-  function toggleMode() {
-    creatingAccount = !creatingAccount;
-    registerFields.style.display = creatingAccount ? "block" : "none";
-    formTitle.textContent = creatingAccount ? "Create Account" : "Employee Login";
-    loginBtn.textContent = creatingAccount ? "Create Account" : "Login";
-    toggleLink.textContent = creatingAccount ? "Back to Login" : "Create an account";
-    errorMsg.textContent = "";
+let creatingAccount = false;
+
+function toggleMode() {
+  creatingAccount = !creatingAccount;
+  registerFields.style.display = creatingAccount ? "block" : "none";
+  formTitle.textContent = creatingAccount ? "Create Account" : "Employee Login";
+  loginBtn.textContent = creatingAccount ? "Create Account" : "Login";
+  toggleLink.textContent = creatingAccount ? "Back to Login" : "Create an account";
+  errorMsg.textContent = "";
+
+  registerFields.style.opacity = 0;
+  setTimeout(() => {
+    registerFields.style.transition = "opacity 0.4s ease";
+    registerFields.style.opacity = creatingAccount ? 1 : 0;
+  }, 100);
+}
+
+toggleLink.addEventListener("click", toggleMode);
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  errorMsg.textContent = "";
+
+  const email = emailInput.value.trim();
+  const inputPassword = passwordInput.value;
+
+  if (creatingAccount) {
+    const name = nameInput.value.trim();
+    if (!name) {
+      errorMsg.textContent = "Please enter your name.";
+      return;
+    }
+
+    const hashedPassword = await dcodeIO.bcrypt.hash(inputPassword, 10);
+    const { error: insertError } = await supabase.from("users").insert([
+      { name, email, password: hashedPassword }
+    ]);
+
+    if (insertError) {
+      errorMsg.textContent = "Failed to create account. Email may already exist.";
+      return;
+    }
+
+    const { data, error: fetchError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("email", email);
+
+    if (fetchError || !data || data.length === 0) {
+      errorMsg.textContent = "Error retrieving account.";
+      return;
+    }
+
+    const user = data[0];
+    localStorage.setItem("loggedInUser", JSON.stringify(user));
+    window.location.href = "dashboard.html";
+    return;
   }
 
-  toggleLink.addEventListener("click", toggleMode);
+  const { data, error } = await supabase
+    .from("users")
+    .select("id, email, name, password")
+    .eq("email", email);
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    errorMsg.textContent = "";
+  if (error || !data || data.length === 0) {
+    errorMsg.textContent = "Invalid credentials.";
+    return;
+  }
 
-    const email = emailInput.value.trim();
-    const password = passwordInput.value;
-    const name = nameInput.value.trim();
+  const user = data[0];
+  const passwordMatch = await dcodeIO.bcrypt.compare(inputPassword, user.password);
 
-    try {
-      if (creatingAccount) {
-        // ✅ Register with Supabase Auth
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { name } // store custom user metadata
-          }
-        });
+  if (!passwordMatch) {
+    errorMsg.textContent = "Invalid credentials.";
+    return;
+  }
 
-        if (error) {
-          errorMsg.textContent = error.message;
-          return;
-        }
-
-        errorMsg.textContent = "Account created! Please check your email to confirm.";
-        toggleMode(); // go back to login mode
-      } else {
-        // ✅ Login with Supabase Auth
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        });
-
-        if (error) {
-          errorMsg.textContent = "Invalid email or password.";
-          return;
-        }
-
-        // Store session in localStorage
-        localStorage.setItem("token", data.session.access_token);
-        localStorage.setItem("loggedInUser", JSON.stringify(data.user));
-
-        // Redirect
-        window.location.href = "dashboard.html";
-      }
-    } catch (err) {
-      errorMsg.textContent = "Something went wrong.";
-    }
-  });
+  localStorage.setItem("loggedInUser", JSON.stringify(user));
+  window.location.href = "dashboard.html";
 });

@@ -25,6 +25,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     showNotification("No board selected.", "error");
     return;
   }
+  function logout() {
+    localStorage.removeItem("loggedInUser");
+    window.location.href = "index.html";
+  }
 
   const { data: board, error } = await supabase
     .from("boards")
@@ -150,10 +154,9 @@ async function loadMembers(boardId, ownerId) {
     div.innerHTML = `
       <strong>${u?.name || "Unknown"}</strong>
       <span>${u?.email || ""}</span>
-      ${
-        isOwner
-          ? `<span class="badge">Owner</span>`
-          : `<button class="kick-btn" data-user="${member.user_id}">❌ Kick</button>`
+      ${isOwner
+        ? `<span class="badge">Owner</span>`
+        : `<button class="kick-btn" data-user="${member.user_id}">❌ Kick</button>`
       }
     `;
     container.appendChild(div);

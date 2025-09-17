@@ -124,7 +124,6 @@ function getColorForCategory(category) {
 }
 
 function logout() {
-  // Align with the rest of the app (login stores 'loggedInUser')
   localStorage.removeItem("loggedInUser");
   window.location.href = "index.html";
 }

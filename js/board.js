@@ -66,6 +66,11 @@ function closeColumnModal() {
   document.getElementById("columnModal").style.display = "none";
 }
 
+function logout() {
+  localStorage.removeItem("loggedInUser");
+  window.location.href = "index.html";
+}
+
 document.getElementById("columnForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const name = document.getElementById("columnNameInput").value.trim();

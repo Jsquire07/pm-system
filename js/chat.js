@@ -155,6 +155,12 @@ function scrollToBottom() {
   if (isAtBottom) chatBox.scrollTop = chatBox.scrollHeight;
 }
 
+function logout() {
+  localStorage.removeItem("loggedInUser");
+  window.location.href = "index.html";
+}
+
+
 document.addEventListener("DOMContentLoaded", async () => {
   await loadMessages(true);
 

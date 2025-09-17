@@ -163,22 +163,31 @@ function logout() {
 document.addEventListener("DOMContentLoaded", async () => {
   await loadMessages(true);
 
-  supabase
-    .channel("messages-stream")
-    .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, (payload) => {
-      appendMessage(payload.new);
-      scrollToBottom();
-    })
-    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "messages" }, (payload) => {
-      updateMessageInDom(payload.new.id, payload.new.text);
-    })
-    .on("postgres_changes", { event: "DELETE", schema: "public", table: "messages" }, (payload) => {
-      removeMessageFromDom(payload.old.id);
-    })
-    .subscribe((status) => {
-      if (status !== "SUBSCRIBED") {
-        console.warn("Realtime not available, falling back to polling.");
-        setInterval(() => loadMessages(false), 2000);
+  const channel = supabase
+    .channel("public:messages") // unique name is fine
+    .on(
+      "postgres_changes",
+      { event: "INSERT", schema: "public", table: "messages" },
+      (payload) => {
+        appendMessage(payload.new);
+        scrollToBottom();
       }
+    )
+    .on(
+      "postgres_changes",
+      { event: "UPDATE", schema: "public", table: "messages" },
+      (payload) => {
+        updateMessageInDom(payload.new.id, payload.new.text);
+      }
+    )
+    .on(
+      "postgres_changes",
+      { event: "DELETE", schema: "public", table: "messages" },
+      (payload) => {
+        removeMessageFromDom(payload.old.id);
+      }
+    )
+    .subscribe((status) => {
+      console.log("Realtime status:", status);
     });
 });

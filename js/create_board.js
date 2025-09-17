@@ -1,3 +1,8 @@
+function logout() {
+  localStorage.removeItem("loggedInUser");
+  window.location.href = "index.html";
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const user = JSON.parse(localStorage.getItem("loggedInUser"));
   if (!user) {

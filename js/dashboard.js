@@ -1,16 +1,19 @@
+// ===== Dashboard Initialization =====
 document.addEventListener("DOMContentLoaded", async () => {
+  // ===== 1. Check login =====
   const user = JSON.parse(localStorage.getItem("loggedInUser"));
   if (!user) {
     showNotification("Not logged in.", "error");
-    window.location.href = "index.html";
+    window.location.href = "index.html"; // Redirect if not logged in
     return;
   }
 
+  // ===== 2. Setup welcome message =====
   const welcome = document.getElementById("welcomeMessage");
   const boardList = document.getElementById("boardsList");
   welcome.textContent = `Welcome, ${user.name}!`;
 
-  // Step 1: Get board memberships
+  // ===== Step 1: Get board memberships =====
   const { data: memberships, error: membershipError } = await supabase
     .from("board_members")
     .select("board_id")
@@ -23,13 +26,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   const boardIds = memberships.map(m => m.board_id);
-
   if (boardIds.length === 0) {
     boardList.innerHTML = "<p>No boards yet. Create or join one!</p>";
     return;
   }
 
-  // Step 2: Get boards
+  // ===== Step 2: Fetch board details =====
   const { data: boards, error: boardError } = await supabase
     .from("boards")
     .select("*")
@@ -41,7 +43,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  // Step 3: Fetch owners
+  // ===== Step 3: Fetch owners (to display their names) =====
   const ownerIds = [...new Set(boards.map(b => b.owner_id))];
   const { data: owners, error: ownersError } = await supabase
     .from("users")
@@ -52,7 +54,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.error("Error loading owners:", ownersError.message);
   }
 
-  // Step 4: Render each board
+  // ===== Step 4: Render each board card =====
   boards.forEach(board => {
     const isOwner = String(board.owner_id) === String(user.id);
     const owner = owners.find(u => u.id === board.owner_id);
@@ -62,10 +64,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     card.className = "card";
     card.style.backgroundColor = board.theme_color || "#ffffff";
 
+    // Display board icon if available
     const icon = board.icon_url
       ? `<img src="${board.icon_url}" alt="Board Icon" style="width:40px; height:40px; border-radius:8px; margin-bottom:10px;">`
       : "";
 
+    // Card content (board name, description, owner, join code, links)
     card.innerHTML = `
       <h2>${board.name}</h2>
       ${icon}
@@ -85,7 +89,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     boardList.appendChild(card);
   });
 
-  // Copy join code handlers
+  // ===== Copy join code to clipboard =====
   document.querySelectorAll(".copy-code-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const code = btn.dataset.code;
@@ -95,7 +99,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  // Universal Search
+  // ===== Universal Search =====
   const searchInput = document.getElementById("dashboardSearch");
   const searchResults = document.getElementById("searchResults");
 
@@ -107,6 +111,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
+    // Perform parallel searches in boards, users, columns, tasks
     const [boardsRes, employeesRes, columnsRes, tasksRes] = await Promise.all([
       supabase.from("boards").select("*").ilike("name", `%${query}%`),
       supabase.from("users").select("*").or(`name.ilike.%${query}%,email.ilike.%${query}%`),
@@ -116,6 +121,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const results = [];
 
+    // Build results list
     if (boardsRes.data) {
       boardsRes.data.forEach(b => results.push({
         label: `📋 Board: ${b.name}`,
@@ -144,6 +150,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }));
     }
 
+    // Render results
     if (results.length === 0) {
       searchResults.innerHTML = `<div>No results found</div>`;
     } else {
@@ -158,6 +165,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     searchResults.style.display = "block";
   });
 
+  // Close search results when clicking outside
   document.addEventListener("click", (e) => {
     if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
       searchResults.style.display = "none";
@@ -165,6 +173,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 });
 
+// ===== Show notification helper =====
 function showNotification(message, type = "info") {
   const container = document.getElementById("notificationContainer");
 
@@ -174,11 +183,13 @@ function showNotification(message, type = "info") {
 
   container.appendChild(notification);
 
+  // Auto-remove notification after 3s
   setTimeout(() => {
     notification.remove();
   }, 3000);
 }
 
+// ===== Logout =====
 function logout() {
   localStorage.removeItem("loggedInUser");
   window.location.href = "index.html";

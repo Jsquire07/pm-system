@@ -1,9 +1,12 @@
+// ===== Logout helper =====
 function logout() {
   localStorage.removeItem("loggedInUser");
   window.location.href = "index.html";
 }
 
+// ===== Main logic =====
 document.addEventListener("DOMContentLoaded", () => {
+  // Grab current logged-in user from localStorage
   const user = JSON.parse(localStorage.getItem("loggedInUser"));
   if (!user) {
     alert("Not logged in.");
@@ -14,16 +17,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("joinBoardForm");
   const message = document.getElementById("joinMessage");
 
+  // ===== Handle join board form submission =====
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+
     const code = document.getElementById("joinCode").value.trim();
 
+    // Guard: user object must exist and have an email
     if (!user || !user.email) {
       alert("You must be logged in to join a board.");
       return;
     }
 
-    // Find board by code
+    // Step 1: Look up board by its unique join code
     const { data: board, error } = await supabase
       .from("boards")
       .select("*")
@@ -36,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Check if user is already a member
+    // Step 2: Check if the user is already a member of this board
     const { data: existing, error: existErr } = await supabase
       .from("board_members")
       .select("*")
@@ -50,7 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Add user to board
+    // Step 3: Insert new membership into board_members table
     const { error: insertErr } = await supabase.from("board_members").insert([
       { user_id: user.id, board_id: board.id }
     ]);
@@ -61,6 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // Step 4: Success — notify user and reset form
     message.style.color = "green";
     message.textContent = `✅ Joined board "${board.name}" successfully!`;
     form.reset();

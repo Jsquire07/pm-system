@@ -1,12 +1,16 @@
+// ===== Notification utilities =====
+
+// Show a temporary popup notification (info/success/error)
 function showNotification(message, type = "info") {
   const container = document.getElementById("notificationContainer");
   const notification = document.createElement("div");
   notification.className = `notification ${type}`;
   notification.textContent = message;
   container.appendChild(notification);
-  setTimeout(() => notification.remove(), 3400);
+  setTimeout(() => notification.remove(), 3400); // Auto-remove
 }
 
+// Show a confirmation modal with Yes/Cancel
 function showConfirm(message, onConfirm) {
   const modal = document.getElementById("confirmModal");
   const messageEl = document.getElementById("confirmModalMessage");
@@ -16,37 +20,40 @@ function showConfirm(message, onConfirm) {
   messageEl.textContent = message;
   modal.style.display = "flex";
 
+  // Reset button event listeners
   yesBtn.replaceWith(yesBtn.cloneNode(true));
   cancelBtn.replaceWith(cancelBtn.cloneNode(true));
 
   const newYesBtn = document.getElementById("confirmYesBtn");
   const newCancelBtn = document.getElementById("confirmCancelBtn");
 
+  // Confirm action
   newYesBtn.addEventListener("click", () => {
     modal.style.display = "none";
     if (onConfirm) onConfirm();
   });
 
+  // Cancel action
   newCancelBtn.addEventListener("click", () => {
     modal.style.display = "none";
   });
 }
 
+// ===== Logout =====
 function logout() {
   localStorage.removeItem("loggedInUser");
   window.location.href = "index.html";
 }
 
-/* ===== Permissions ===== */
-let canManage = false;         // computed at load
-let currentUser = null;        // { id, ... }
+/* ===== Permissions & state ===== */
+let canManage = false;   // True if current user is manager
+let currentUser = null;  // Logged-in user { id, ... }
+let allEmployees = [];   // Cached employees
+let searchQuery = "";    // Current search filter
 
-/* ===== Employees state ===== */
-let allEmployees = [];
-let searchQuery = "";
+/* ===== CRUD: Add/Edit/Remove employees (with permissions) ===== */
 
-/* ===== CRUD with permission checks ===== */
-
+// Add new employee
 async function addEmployee() {
   if (!canManage) return showNotification("You don’t have permission to add employees.", "error");
 
@@ -61,6 +68,7 @@ async function addEmployee() {
   }
 
   try {
+    // Hash password client-side (bcrypt.js)
     const hashedPassword = await dcodeIO.bcrypt.hash(password, 10);
     const { error } = await supabase
       .from("users")
@@ -80,12 +88,14 @@ async function addEmployee() {
   }
 }
 
+// Edit an existing employee
 async function editEmployee(id) {
   if (!canManage) return showNotification("You don’t have permission to edit employees.", "error");
 
   const emp = allEmployees.find((x) => String(x.id) === String(id));
   if (!emp) return;
 
+  // Prompt user for new values
   const newName = prompt("Name", emp.name || "");
   if (newName === null) return;
   const newRole = prompt("Role", emp.role || "");
@@ -106,6 +116,7 @@ async function editEmployee(id) {
   }
 }
 
+// Remove employee
 async function removeEmployee(id) {
   if (!canManage) return showNotification("You don’t have permission to remove employees.", "error");
 
@@ -118,13 +129,13 @@ async function removeEmployee(id) {
   }
 }
 
-/* ===== Render ===== */
-
+/* ===== Rendering employee list ===== */
 async function renderEmployees() {
   const tbody = document.getElementById("employeeList");
   const empty = document.getElementById("employeeEmpty");
   tbody.innerHTML = "";
 
+  // Fetch employees from Supabase
   const { data: employees, error } = await supabase.from("users").select("*");
   if (error) {
     tbody.innerHTML = `<tr><td colspan="4">Error loading employees.</td></tr>`;
@@ -134,6 +145,7 @@ async function renderEmployees() {
 
   allEmployees = employees || [];
 
+  // Apply search filter
   const filtered = allEmployees.filter((e) => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
@@ -150,15 +162,18 @@ async function renderEmployees() {
   }
   empty.style.display = "none";
 
+  // Render table rows
   filtered.forEach((emp) => {
     const tr = document.createElement("tr");
+
+    // Action buttons (only if manager)
     const actionsCell = canManage
       ? `
         <div class="actions-cell">
           <button class="icon-btn" title="Edit" data-action="edit" data-id="${emp.id}">✏️</button>
           <button class="icon-btn" title="Remove" data-action="remove" data-id="${emp.id}">🗑</button>
         </div>`
-      : ``; // view-only: no buttons
+      : ``;
 
     tr.innerHTML = `
       <td>${emp.name || ""}</td>
@@ -169,7 +184,7 @@ async function renderEmployees() {
     tbody.appendChild(tr);
   });
 
-  // Wire actions (if allowed)
+  // Wire up edit/remove actions
   if (canManage) {
     tbody.querySelectorAll("button.icon-btn").forEach((btn) => {
       const id = btn.dataset.id;
@@ -186,24 +201,23 @@ async function renderEmployees() {
   }
 }
 
-/* ===== Permissions UI helpers ===== */
-
+/* ===== UI permissions (show/hide form/buttons) ===== */
 function applyPermissionsUI() {
-  // Hide add form card for view-only users
+  // Hide Add Employee form if not manager
   const addForm = document.getElementById("addEmployeeForm");
   if (addForm) {
     const addSection = addForm.closest(".card");
     if (addSection) addSection.style.display = canManage ? "" : "none";
   }
 
-  // Hide the Actions header if view-only
+  // Hide Actions table header for view-only users
   const actionsHeader = document.getElementById("actionsHeader");
   if (actionsHeader) actionsHeader.style.display = canManage ? "" : "none";
 }
 
 /* ===== Init ===== */
 document.addEventListener("DOMContentLoaded", async () => {
-  // Auth gate
+  // Require login
   currentUser = JSON.parse(localStorage.getItem("loggedInUser"));
   if (!currentUser) {
     showNotification("Not logged in.", "error");
@@ -212,7 +226,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   try {
-    // Always fetch fresh to pick up is_manager (localStorage may not include it)
+    // Fetch user from Supabase to check if they are a manager
     const { data: me, error: meErr } = await supabase
       .from("users")
       .select("id, is_manager")
@@ -230,10 +244,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     canManage = false;
   }
 
+  // Apply permissions and render employees
   applyPermissionsUI();
   await renderEmployees();
 
-  // Form submit
+  // Add employee form submit
   const addForm = document.getElementById("addEmployeeForm");
   if (addForm) {
     addForm.addEventListener("submit", (e) => {
@@ -242,7 +257,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // Live search with light debounce
+  // Live search (debounced)
   const searchInput = document.getElementById("employeeSearch");
   let t;
   searchInput.addEventListener("input", (e) => {

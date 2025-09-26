@@ -1,6 +1,8 @@
+// ===== Parse URL for issue ID =====
 const urlParams = new URLSearchParams(window.location.search);
 const issueId = urlParams.get("id");
 
+// ===== DOM elements for issue fields =====
 const titleEl = document.getElementById("issue-title");
 const statusEl = document.getElementById("issue-status");
 const descriptionEl = document.getElementById("issue-description");
@@ -10,20 +12,23 @@ const dueDateEl = document.getElementById("due-date");
 const dueTimeEl = document.getElementById("due-time");
 const categoryEl = document.getElementById("category");
 
-let issue = null;
+let issue = null; // Holds the current issue/task data
 
+// ===== Notification (toast) helper =====
 function toast(msg, type = "info") {
   const container = document.getElementById("notificationContainer");
-  if (!container) return alert(msg);
+  if (!container) return alert(msg); // Fallback if container missing
   const n = document.createElement("div");
   n.className = `notification ${type}`;
   n.textContent = msg;
   container.appendChild(n);
-  setTimeout(() => n.remove(), 3200);
+  setTimeout(() => n.remove(), 3200); // Auto-remove after ~3.2s
 }
 
+// ===== Load issue details on page load =====
 (async function loadIssue() {
   if (!issueId) {
+    // No ID provided → show error message
     document.querySelector(".issue-view").innerHTML = `
       <h2>Issue not found</h2>
       <p><a href="board.html">Return to board</a></p>
@@ -31,9 +36,10 @@ function toast(msg, type = "info") {
     return;
   }
 
-  // Fetch the task
+  // Fetch the task/issue from Supabase
   const { data, error } = await supabase.from("tasks").select("*").eq("id", issueId).single();
   if (error || !data) {
+    // Handle missing/invalid issue
     document.querySelector(".issue-view").innerHTML = `
       <h2>Issue not found</h2>
       <p><a href="board.html">Return to board</a></p>
@@ -42,9 +48,10 @@ function toast(msg, type = "info") {
   }
   issue = data;
 
+  // Fill issue title
   titleEl.innerText = issue.title || "(Untitled)";
 
-  // Display human status (column name) if possible
+  // Try to display column name instead of raw status ID
   let statusText = issue.status || "(Unknown)";
   try {
     const { data: col } = await supabase.from("columns").select("name").eq("id", issue.status).single();
@@ -52,13 +59,14 @@ function toast(msg, type = "info") {
   } catch (_) {}
   statusEl.innerText = statusText;
 
+  // Fill issue details into form fields
   descriptionEl.value = issue.description || "";
   priorityEl.value = issue.priority || "Medium";
   dueDateEl.value = issue.dueDate || "";
   dueTimeEl.value = issue.dueTime || "";
   categoryEl.value = issue.category || "";
 
-  // Assignees
+  // ===== Populate assignee dropdown =====
   const { data: employees } = await supabase.from("users").select("*");
   assigneeEl.innerHTML = `<option value="">Unassigned</option>`;
   (employees || []).forEach(emp => {
@@ -70,6 +78,7 @@ function toast(msg, type = "info") {
   assigneeEl.value = issue.assignee || "";
 })();
 
+// ===== Save issue changes =====
 async function saveIssueChanges() {
   const updatedTask = {
     description: descriptionEl.value,
@@ -80,11 +89,14 @@ async function saveIssueChanges() {
     category: categoryEl.value || null
   };
 
+  // Disable buttons while saving
   const btns = document.querySelectorAll('.actions button');
   btns.forEach(b => b.disabled = true);
 
+  // Update in Supabase
   const { error } = await supabase.from("tasks").update(updatedTask).eq("id", issueId);
 
+  // Re-enable buttons
   btns.forEach(b => b.disabled = false);
 
   if (error) {
@@ -94,6 +106,7 @@ async function saveIssueChanges() {
   toast("Changes saved", "success");
 }
 
+// ===== Delete issue =====
 async function deleteIssue() {
   if (!confirm("Are you sure you want to delete this issue?")) return;
   const { error } = await supabase.from("tasks").delete().eq("id", issueId);
@@ -102,10 +115,11 @@ async function deleteIssue() {
     return toast("Error deleting issue", "error");
   }
   toast("Issue deleted", "success");
+  // Redirect back to board after short delay
   setTimeout(() => (window.location.href = "board.html"), 400);
 }
 
-// Keep category colors util if you need it elsewhere
+// ===== Category color util (for consistency) =====
 function getColorForCategory(category) {
   switch (category) {
     case "Coding": return "#d0e7ff";
@@ -123,6 +137,7 @@ function getColorForCategory(category) {
   }
 }
 
+// ===== Logout =====
 function logout() {
   localStorage.removeItem("loggedInUser");
   window.location.href = "index.html";
